@@ -41,13 +41,15 @@ Die Browserprüfungen beschleunigen Bau-/Forschungszeiten und verwenden vorberei
 
 ## Android-Testgrenze
 
-Die offiziellen SDK-/Emulatorpakete wurden gegen ihre veröffentlichten Prüfsummen geprüft. Das Android-35-Testsystem läuft hier ohne `/dev/kvm`. Bei der ersten Initialisierung hat Androids eigener Watchdog den Systemserver beendet; die APK ließ sich zu diesem Zeitpunkt nicht installieren. Das virtuelle System konnte später booten, die Sitzung endete jedoch vor einem App-Test. Auch beim erneuten Versuch ist bislang kein erfolgreicher Start der App nachgewiesen; die APK wird daher nur als Testfassung bereitgestellt.
+Die offiziellen SDK-/Emulatorpakete wurden gegen ihre veröffentlichten Prüfsummen geprüft. Das Android-35-Testsystem läuft hier ohne `/dev/kvm`. Bei der ersten Initialisierung hat Androids eigener Watchdog den Systemserver beendet. Nach einem erneuten Start wurde das System bereit und die signierte APK wurde tatsächlich installiert.
 
-Bis ein erfolgreicher App-Start ausdrücklich dokumentiert ist, sind die native Installation, Dateidialoge, Unterbrechung/Wiederaufnahme und Grafikleistung **nicht als am Android-Gerät getestet** anzusehen. Die APK ist gebaut und technisch verifiziert, aber keine vollständig abgenommene Android-Releasefassung.
+**Der native Starttest ist nicht bestanden.** Die Activity und Android-System-WebView 124 wurden gestartet, die Anzeige blieb zunächst leer. Danach stürzte der WebView-Renderer mit `SIGTRAP` innerhalb von `libwebviewchromium.so` ab; anschließend beendete Android auch die Activity. Im Emulator wurden außerdem fehlende ES-3.1-/3.2-Unterstützung und sehr lange Frames protokolliert. Die genaue Ursache des Rendererabsturzes ist damit nicht abschließend bewiesen; aus diesem Versuch folgt keine Aussage über ein physisches Gerät.
+
+Die Browserfassung besteht ihre getrennten Prüfungen. Die APK bleibt ausschließlich eine experimentelle Testdatei. Dateidialoge, nativer Pause/Resume-Ablauf, zuverlässiger Start und Geräteperformance sind nicht abgenommen. Die vorhandene Browserprüfung des JavaScript-Bridge-Callbacks verwendet einen simulierten nativen Gegenpart und ersetzt diese Prüfung nicht.
 
 ## Nächste Arbeit
 
-1. Die APK auf einem verfügbaren Android-Gerät tatsächlich starten und die nativen Abläufe prüfen; native Ergebnisse gegebenenfalls unten ergänzen.
+1. Den WebView-Start auf einem hardwarebeschleunigten Emulator oder physischen Android-Gerät prüfen, die Rendererabbruch-Behandlung ergänzen und anschließend die nativen Abläufe abnehmen. Die aktuelle APK ist noch nicht freigegeben.
 2. Die gewünschte feinere, farbigere und klar lesbare eigene Grafik ausarbeiten: Gebäude-Silhouetten, Materialien, Bewohner, Animationen und Effekte. Keine übernommenen Clash-of-Clans-Assets.
 3. Auf physischen Mittelklassegeräten Frametimes, Speicher, Temperatur, lange Sitzungen und kleine Displays prüfen; anschließend manuelles Balancing nach Spielerfahrung.
 4. Eine Store-Veröffentlichung separat vorbereiten, einschließlich eigener Release-Signierung, Entwicklerkonten und Store-Unterlagen. Es wurde nichts in einen Store eingereicht.
