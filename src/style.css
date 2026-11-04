@@ -2682,3 +2682,170 @@ progress::-moz-progress-bar {
     font-size: 10px;
   }
 }
+/* Campaign controls retain the existing visual language. */
+.route-form,
+.army-controls,
+.city-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin: 16px 0;
+}
+.route-form label,
+.army-controls label,
+.world-seed {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+}
+.route-form label {
+  flex: 1 1 130px;
+}
+.route-form select,
+.route-form input,
+.army-controls select,
+.world-seed input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #c8c7b6;
+  border-radius: 6px;
+  background: #f4f1e5;
+  color: #33463d;
+  min-width: 0;
+}
+.world-seed {
+  max-width: 180px;
+  margin: 16px 0;
+}
+.city-grid > article {
+  flex: 1 1 200px;
+}
+.route-card {
+  padding: 14px;
+  margin: 8px 0;
+  background: #eeeddf;
+  border: 1px solid #d5d4c3;
+  border-radius: 8px;
+}
+.route-card p {
+  font-size: 12px;
+}
+.route-card .split {
+  flex-wrap: wrap;
+}
+.needs-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.needs-grid > div {
+  display: grid;
+  gap: 8px;
+  background: #eeeddf;
+  padding: 14px;
+  border-radius: 8px;
+}
+.needs-grid progress {
+  width: 100%;
+}
+.campaign-goal {
+  padding: 20px;
+  background: #e7e8d7;
+  border: 1px solid #c4cbb1;
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+.campaign-eras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.campaign-eras span {
+  padding: 6px 9px;
+  border: 1px solid #c8cebb;
+  border-radius: 4px;
+  opacity: 0.6;
+}
+.campaign-eras .done {
+  opacity: 1;
+  background: #607864;
+  color: #fff;
+}
+.campaign-goal > .cost {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+.unit-roster.selectable {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 8px;
+}
+.unit-roster.selectable button {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid #bfc6b3;
+  background: #f4f1e5;
+  border-radius: 6px;
+  text-align: left;
+}
+.unit-roster.selectable .selected {
+  outline: 2px solid #758d64;
+  background: #e2e6d4;
+}
+.unit-roster.selectable span {
+  display: grid;
+  gap: 4px;
+}
+.unit-roster.selectable small {
+  font-size: 10px;
+}
+.unit-roster.selectable progress {
+  width: 45px;
+  margin-left: auto;
+}
+.route-list .cost,
+.unit-card .cost {
+  flex-wrap: wrap;
+}
+.region-card .cost {
+  flex-wrap: wrap;
+}
+.region-card button .cost {
+  display: flex;
+  margin-top: 7px;
+}
+.cost small {
+  font-size: 9px;
+}
+.region-card progress {
+  width: 100%;
+}
+.unit-card {
+  min-width: 0;
+}
+.unit-grid {
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+@media (max-width: 600px) {
+  .needs-grid {
+    gap: 6px;
+  }
+  .needs-grid > div {
+    padding: 8px;
+    font-size: 11px;
+  }
+  .route-form {
+    align-items: stretch;
+  }
+  .army-controls button {
+    flex: 1 1 40%;
+    font-size: 12px;
+  }
+  .campaign-goal {
+    padding: 12px;
+  }
+}

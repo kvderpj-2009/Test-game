@@ -9,6 +9,19 @@ export const RESOURCES = [
   'copper',
   'bronze',
   'gold',
+  'iron',
+  'coal',
+  'steel',
+  'cloth',
+  'paper',
+  'medicine',
+  'oil',
+  'energy',
+  'electronics',
+  'alloys',
+  'fuel',
+  'data',
+  'crystals',
 ] as const;
 export type Resource = (typeof RESOURCES)[number];
 export type Stock = Record<Resource, number>;
@@ -39,6 +52,9 @@ export interface BuildingDef {
   hp?: number;
   range?: number;
   damage?: number;
+  age?: number;
+  service?: 'health' | 'education' | 'culture';
+  serviceValue?: number;
 }
 export interface Building extends Point {
   id: number;
@@ -47,6 +63,7 @@ export interface Building extends Point {
   remaining: number;
   hp: number;
   rotation: number;
+  paused?: boolean;
 }
 export interface Worker extends Point {
   id: number;
@@ -58,14 +75,16 @@ export interface Worker extends Point {
   timer: number;
   cargo: Cost;
   resource: Resource;
+  serviceCargo?: { kind: 'health' | 'education' | 'culture'; amount: number };
 }
 export interface Soldier extends Point {
   id: number;
-  type: 'guard' | 'archer';
+  type: string;
   hp: number;
   path: Point[];
   cooldown: number;
   target: string | null;
+  order?: 'defend' | 'attack' | 'hold' | 'move' | 'retreat';
 }
 export interface Region extends Point {
   id: string;
@@ -75,12 +94,59 @@ export interface Region extends Point {
   maxEnemy: number;
   reward: Cost;
   progress: number;
+  kind?: 'woods' | 'ruins' | 'traders' | 'raiders';
+  tier?: number;
+  seed?: number;
 }
 export interface ResearchDef {
   id: string;
   cost: Cost;
   time: number;
   requires: string[];
+  age?: number;
+  population?: number;
+  building?: string;
+}
+export interface UnitDef {
+  id: string;
+  age: number;
+  hp: number;
+  damage: number;
+  range: number;
+  speed: number;
+  cooldown: number;
+  cost: Cost;
+  siege?: boolean;
+}
+export type CityData = Pick<
+  GameState,
+  | 'seed'
+  | 'resources'
+  | 'cleared'
+  | 'buildings'
+  | 'workers'
+  | 'soldiers'
+  | 'nextId'
+  | 'populationTimer'
+  | 'happiness'
+  | 'raidTimer'
+  | 'raid'
+  | 'services'
+>;
+export interface Colony {
+  id: string;
+  data: CityData;
+}
+export interface TradeRoute {
+  id: number;
+  from: string;
+  to: string;
+  resource: Resource;
+  amount: number;
+  cargo: number;
+  remaining: number;
+  repeat: boolean;
+  paused: boolean;
 }
 export interface GameState {
   version: number;
@@ -100,8 +166,20 @@ export interface GameState {
   nextId: number;
   populationTimer: number;
   happiness: number;
+  services: { health: number; education: number; culture: number };
+  activeCity: string;
+  colonies: Colony[];
+  routes: TradeRoute[];
+  campaign: { launched: boolean; launchRemaining: number };
+  lastActive: number;
   raidTimer: number;
   raid: { hp: number; x: number; y: number } | null;
   stats: { built: number; upgraded: number; explored: number; defeated: number; traded: number };
-  settings: { language: Language; sound: boolean; quality: 'high' | 'low' };
+  settings: {
+    language: Language;
+    sound: boolean;
+    quality: 'high' | 'low';
+    difficulty: 'peaceful' | 'normal' | 'hard';
+    offline: boolean;
+  };
 }

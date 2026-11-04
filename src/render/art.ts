@@ -106,6 +106,32 @@ export function buildingArt(type: string, level = 1): HTMLCanvasElement {
   const def = BUILDING[type],
     s = def.size;
   ellipse(c, 6, 3, s * 28, s * 12, '#344d3a25');
+  if (type === 'bridge') {
+    polygon(
+      c,
+      [
+        [0, -16],
+        [32, 0],
+        [0, 16],
+        [-32, 0],
+      ],
+      '#b89766',
+      '#766345',
+    );
+    for (let i = 1; i < 8; i++) {
+      const x = -32 + i * 8;
+      line(
+        c,
+        [
+          [x, -16 + Math.abs(x) / 2],
+          [x, 16 - Math.abs(x) / 2],
+        ],
+        '#796749',
+        1,
+      );
+    }
+    return canvas;
+  }
   if (type === 'road') {
     polygon(
       c,

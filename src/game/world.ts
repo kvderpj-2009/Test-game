@@ -40,13 +40,33 @@ export function walkable(state: GameState, x: number, y: number) {
     y < 1 ||
     x >= MAP_SIZE - 1 ||
     y >= MAP_SIZE - 1 ||
-    terrain(x, y, state.seed) === 'water'
+    (terrain(x, y, state.seed) === 'water' && at(state, x, y)?.type !== 'bridge')
   )
     return false;
   const b = at(state, x, y);
-  return !b || ['road', 'gate', 'fire', 'plaza', 'trap'].includes(b.type);
+  return !b || ['road', 'bridge', 'gate', 'fire', 'plaza', 'trap'].includes(b.type);
+}
+const navigation = new WeakMap<GameState, { signature: string; grid: Uint8Array }>();
+function navGrid(state: GameState) {
+  const signature =
+    state.seed + ':' + state.buildings.map((b) => `${b.id},${b.type},${b.x},${b.y}`).join(';');
+  const cached = navigation.get(state);
+  if (cached?.signature === signature) return cached.grid;
+  const grid = new Uint8Array(MAP_SIZE * MAP_SIZE);
+  for (let y = 1; y < MAP_SIZE - 1; y++)
+    for (let x = 1; x < MAP_SIZE - 1; x++)
+      grid[x + y * MAP_SIZE] = terrain(x, y, state.seed) !== 'water' ? 1 : 0;
+  for (const b of state.buildings) {
+    const open = ['road', 'bridge', 'gate', 'fire', 'plaza', 'trap'].includes(b.type);
+    for (let dx = 0; dx < BUILDING[b.type].size; dx++)
+      for (let dy = 0; dy < BUILDING[b.type].size; dy++)
+        grid[b.x + dx + (b.y + dy) * MAP_SIZE] = open ? 1 : 0;
+  }
+  navigation.set(state, { signature, grid });
+  return grid;
 }
 export function pathfind(state: GameState, from: Point, to: Point): Point[] {
+  const grid = navGrid(state);
   const start = { x: Math.floor(from.x), y: Math.floor(from.y) };
   const goal = { x: Math.floor(to.x), y: Math.floor(to.y) };
   if (start.x === goal.x && start.y === goal.y) return [];
@@ -64,7 +84,11 @@ export function pathfind(state: GameState, from: Point, to: Point): Point[] {
     ]) {
       const next = { x: p.x + dx, y: p.y + dy },
         k = key(next);
-      if (previous.has(k) || !walkable(state, next.x, next.y)) continue;
+      if (
+        previous.has(k) ||
+        !(next.x > 0 && next.y > 0 && next.x < MAP_SIZE - 1 && next.y < MAP_SIZE - 1 && grid[k])
+      )
+        continue;
       previous.set(k, p);
       if (next.x === goal.x && next.y === goal.y) {
         const route: Point[] = [next];
@@ -85,6 +109,7 @@ export function reachable(
   from: Point,
   predicate: (x: number, y: number) => boolean,
 ): { point: Point; path: Point[] } | null {
+  const grid = navGrid(state);
   const start = { x: Math.floor(from.x), y: Math.floor(from.y) },
     key = (p: Point) => p.x + p.y * MAP_SIZE;
   const queue = [start],
@@ -92,7 +117,7 @@ export function reachable(
   let index = 0;
   while (index < queue.length && index < MAP_SIZE * MAP_SIZE) {
     const p = queue[index++];
-    if (walkable(state, p.x, p.y) && predicate(p.x, p.y)) {
+    if (grid[key(p)] && predicate(p.x, p.y)) {
       const route: Point[] = [];
       let cur: Point | null | undefined = p;
       while (cur && key(cur) !== key(start)) {
@@ -108,7 +133,14 @@ export function reachable(
       [0, -1],
     ]) {
       const next = { x: p.x + dx, y: p.y + dy };
-      if (!previous.has(key(next)) && walkable(state, next.x, next.y)) {
+      if (
+        !previous.has(key(next)) &&
+        next.x > 0 &&
+        next.y > 0 &&
+        next.x < MAP_SIZE - 1 &&
+        next.y < MAP_SIZE - 1 &&
+        grid[key(next)]
+      ) {
         previous.set(key(next), p);
         queue.push(next);
       }

@@ -1,6 +1,6 @@
 {
   "name": "pocket-civilization",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,7 +10,8 @@
     "preview": "vite preview --host 0.0.0.0",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "test:offline": "playwright test --config playwright.production.config.ts"
+    "test:offline": "playwright test --config playwright.production.config.ts",
+    "build:android": "npm run build && python3 scripts/build-android.py"
   },
   "dependencies": {
     "pixi.js": "^8.13.2"

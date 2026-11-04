@@ -225,9 +225,10 @@ describe('save integrity', () => {
   it('migrates v1 without deleting the original and refuses unsupported future versions', () => {
     const state: any = newGame();
     state.version = 1;
+    state.regions = state.regions.slice(0, 4);
     delete state.cleared;
     const text = JSON.stringify(state);
-    expect(decode(text).version).toBe(2);
+    expect(decode(text).version).toBe(3);
     expect(decode(text).cleared).toEqual([]);
     state.version = 99;
     expect(() => decode(JSON.stringify(state))).toThrow();

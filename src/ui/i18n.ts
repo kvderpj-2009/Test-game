@@ -1,3 +1,4 @@
+import { campaignStrings } from './campaign-i18n';
 import type { Language } from '../game/types';
 type Entry = [string, string, string, string];
 // Every player-facing string, including catalog data, is selected here.
@@ -682,6 +683,7 @@ const strings: Record<string, Entry> = {
     'Relie votre village. Les chemins restent praticables.',
   ],
 };
+Object.assign(strings, campaignStrings);
 let language: Language = 'de';
 export function setLanguage(l: Language) {
   language = l;

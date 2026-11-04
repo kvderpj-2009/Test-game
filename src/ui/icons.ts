@@ -43,6 +43,22 @@ const paths: Record<string, string> = {
   move: '<path d="M12 2v20M2 12h20M8 6l4-4 4 4M8 18l4 4 4-4M6 8l-4 4 4 4M18 8l4 4-4 4"/>',
   trash: '<path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M9 10v7M15 10v7"/>',
 };
+Object.assign(paths, {
+  iron: '<path d="m3 16 4-7h11l3 7-9 5zM3 16h18M7 9l5 5 6-5M12 14v7"/>',
+  coal: '<path d="m3 17 2-9 7-5 8 5 2 10-9 3zM5 8l8 7 7-7M13 15v6"/>',
+  steel: '<path d="M3 5h18v4h-7v6h7v4H3v-4h7V9H3z"/>',
+  cloth: '<path d="M3 4h18v16H3zM7 4v16M12 4v16M17 4v16M3 9h18M3 15h18"/>',
+  paper: '<path d="M5 3h10l4 4v14H5zM15 3v5h4M8 12h8M8 16h8"/>',
+  medicine: '<path d="M8 3h8v4H8zM7 7h10l3 5v9H4v-9zM12 11v7M9 14h6"/>',
+  oil: '<path d="M12 2S4 12 4 16a8 6 0 0 0 16 0C20 12 12 2 12 2zM8 15v3"/>',
+  energy: '<path d="m13 2-9 12h7l-1 8 10-13h-8z"/>',
+  electronics:
+    '<path d="M6 6h12v12H6zM9 9h6v6H9zM9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/>',
+  alloys: '<path d="m3 17 5-8h9l4 8-9 4zM3 17h18M8 9l4 5 5-5M8 4h9"/>',
+  fuel: '<path d="M5 3h10v18H5zM7 6h6v5H7zM15 12h4v6h2V7l-3-4M3 21h14"/>',
+  data: '<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 4 16 4 16 0V5M4 12c0 4 16 4 16 0"/>',
+  crystals: '<path d="m12 2 7 5 2 9-9 6-9-6 2-9zM12 2v20M5 7l7 5 7-5M3 16l9-4 9 4"/>',
+});
 export function icon(name: string, cls = '') {
   return `<svg class="icon ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name] ?? paths.leaf}</svg>`;
 }

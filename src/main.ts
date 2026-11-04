@@ -1,6 +1,6 @@
 import './style.css';
 import { Engine } from './game/engine';
-import { load } from './game/save';
+import { catchUp, load } from './game/save';
 import { Scene } from './render/scene';
 import { GameUI } from './ui/app';
 import { t } from './ui/i18n';
@@ -16,8 +16,27 @@ async function main() {
   await scene.init(document.querySelector('#world')!);
   const ui = new GameUI(engine, scene, !!saved.state);
   ui.init();
+  Object.assign(window, {
+    pocketNativeMessage: (key: string) => ui.toast(t(key)),
+    pocketNativeImport: (text: string) =>
+      ui.import(new File([text], 'pocket-civilization.json', { type: 'application/json' })),
+    pocketNativePause: () => {
+      if (ui.started) ui.persist();
+    },
+    pocketNativeResume: () => {
+      if (ui.started) {
+        const elapsed = catchUp(engine);
+        if (elapsed) ui.toast(t('offlineReport', { n: Math.floor(elapsed / 60) }));
+      }
+    },
+    pocketNativeBack: () => {
+      if (ui.panel) ui.action('closePanel');
+      else if (scene.commanding || scene.placing || scene.clearing) ui.action('cancel');
+      else if (ui.started) ui.action('menu');
+    },
+  });
   scene.app.canvas.setAttribute('aria-label', t('worldCanvas'));
-  if (import.meta.env.PROD && 'serviceWorker' in navigator)
+  if (import.meta.env.PROD && !window.PocketAndroid && 'serviceWorker' in navigator)
     void navigator.serviceWorker
       .register('./sw.js')
       .catch((error) => console.warn('Offline cache:', error));

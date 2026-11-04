@@ -1,0 +1,274 @@
+{
+  "version": 2,
+  "seed": 73,
+  "time": 0,
+  "age": 0,
+  "resources": {
+    "food": 140,
+    "wood": 160,
+    "stone": 90,
+    "knowledge": 25,
+    "grain": 0,
+    "leather": 0,
+    "tools": 0,
+    "copper": 0,
+    "bronze": 0,
+    "gold": 0
+  },
+  "cleared": [],
+  "buildings": [
+    {
+      "id": 1,
+      "type": "hall",
+      "x": 21,
+      "y": 22,
+      "level": 1,
+      "remaining": 0,
+      "hp": 600,
+      "rotation": 0
+    },
+    {
+      "id": 2,
+      "type": "fire",
+      "x": 20,
+      "y": 24,
+      "level": 1,
+      "remaining": 0,
+      "hp": 180,
+      "rotation": 0
+    },
+    {
+      "id": 3,
+      "type": "road",
+      "x": 18,
+      "y": 25,
+      "level": 1,
+      "remaining": 0,
+      "hp": 180,
+      "rotation": 0
+    },
+    {
+      "id": 4,
+      "type": "road",
+      "x": 19,
+      "y": 25,
+      "level": 1,
+      "remaining": 0,
+      "hp": 180,
+      "rotation": 0
+    },
+    {
+      "id": 5,
+      "type": "road",
+      "x": 20,
+      "y": 25,
+      "level": 1,
+      "remaining": 0,
+      "hp": 180,
+      "rotation": 0
+    },
+    {
+      "id": 6,
+      "type": "road",
+      "x": 21,
+      "y": 25,
+      "level": 1,
+      "remaining": 0,
+      "hp": 180,
+      "rotation": 0
+    },
+    {
+      "id": 7,
+      "type": "road",
+      "x": 22,
+      "y": 25,
+      "level": 1,
+      "remaining": 0,
+      "hp": 180,
+      "rotation": 0
+    },
+    {
+      "id": 8,
+      "type": "road",
+      "x": 23,
+      "y": 25,
+      "level": 1,
+      "remaining": 0,
+      "hp": 180,
+      "rotation": 0
+    },
+    {
+      "id": 9,
+      "type": "road",
+      "x": 24,
+      "y": 25,
+      "level": 1,
+      "remaining": 0,
+      "hp": 180,
+      "rotation": 0
+    },
+    {
+      "id": 10,
+      "type": "road",
+      "x": 25,
+      "y": 25,
+      "level": 1,
+      "remaining": 0,
+      "hp": 180,
+      "rotation": 0
+    },
+    {
+      "id": 11,
+      "type": "road",
+      "x": 26,
+      "y": 25,
+      "level": 1,
+      "remaining": 0,
+      "hp": 180,
+      "rotation": 0
+    },
+    {
+      "id": 12,
+      "type": "road",
+      "x": 27,
+      "y": 25,
+      "level": 1,
+      "remaining": 0,
+      "hp": 180,
+      "rotation": 0
+    }
+  ],
+  "workers": [
+    {
+      "id": 13,
+      "x": 24.5,
+      "y": 25.5,
+      "home": 1,
+      "assigned": null,
+      "task": "idle",
+      "target": null,
+      "path": [],
+      "timer": 0,
+      "cargo": {},
+      "resource": "food"
+    },
+    {
+      "id": 14,
+      "x": 25.1,
+      "y": 25.5,
+      "home": 1,
+      "assigned": null,
+      "task": "idle",
+      "target": null,
+      "path": [],
+      "timer": 0,
+      "cargo": {},
+      "resource": "wood"
+    },
+    {
+      "id": 15,
+      "x": 25.7,
+      "y": 25.5,
+      "home": 1,
+      "assigned": null,
+      "task": "idle",
+      "target": null,
+      "path": [],
+      "timer": 0,
+      "cargo": {},
+      "resource": "stone"
+    }
+  ],
+  "soldiers": [],
+  "regions": [
+    {
+      "id": "woods",
+      "x": 12,
+      "y": 21,
+      "discovered": true,
+      "explored": false,
+      "enemy": 0,
+      "maxEnemy": 0,
+      "reward": {
+        "wood": 55,
+        "food": 30
+      },
+      "progress": 0
+    },
+    {
+      "id": "ruins",
+      "x": 22,
+      "y": 11,
+      "discovered": true,
+      "explored": false,
+      "enemy": 0,
+      "maxEnemy": 0,
+      "reward": {
+        "knowledge": 60,
+        "stone": 35
+      },
+      "progress": 0
+    },
+    {
+      "id": "traders",
+      "x": 12,
+      "y": 32,
+      "discovered": true,
+      "explored": false,
+      "enemy": 0,
+      "maxEnemy": 0,
+      "reward": {
+        "gold": 40,
+        "tools": 10
+      },
+      "progress": 0
+    },
+    {
+      "id": "raiders",
+      "x": 23,
+      "y": 34,
+      "discovered": true,
+      "explored": false,
+      "enemy": 180,
+      "maxEnemy": 180,
+      "reward": {
+        "gold": 70,
+        "leather": 25,
+        "tools": 20
+      },
+      "progress": 0
+    }
+  ],
+  "research": [],
+  "researching": null,
+  "missions": [],
+  "lifetime": {
+    "food": 0,
+    "wood": 0,
+    "stone": 0,
+    "knowledge": 0,
+    "grain": 0,
+    "leather": 0,
+    "tools": 0,
+    "copper": 0,
+    "bronze": 0,
+    "gold": 0
+  },
+  "nextId": 16,
+  "populationTimer": 0,
+  "happiness": 85,
+  "raidTimer": 600,
+  "raid": null,
+  "stats": {
+    "built": 0,
+    "upgraded": 0,
+    "explored": 0,
+    "defeated": 0,
+    "traded": 0
+  },
+  "settings": {
+    "language": "de",
+    "sound": false,
+    "quality": "high"
+  }
+}

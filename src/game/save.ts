@@ -1,5 +1,7 @@
 import { BUILDING, RESEARCH, MAP_SIZE } from './data';
-import { newGame } from './engine';
+import { Engine, newGame, stock } from './engine';
+import { UNITS } from './campaign-data';
+import { extraRegions } from './empire';
 import { RESOURCES, type GameState } from './types';
 export const SAVE_KEY = 'pocket-civilization.v2';
 export const MANUAL_KEY = 'pocket-civilization.manual';
@@ -33,7 +35,7 @@ export function decode(text: string): GameState {
       throw Error('checksum');
     data = JSON.parse(raw.data);
   }
-  if (data.version !== 1 && data.version !== 2) throw Error('unsupported version');
+  if (![1, 2, 3].includes(data.version)) throw Error('unsupported version');
   // v1 is the documented early format: only the fields added in v2 are defaulted.
   if (data.version === 1)
     data = {
@@ -44,12 +46,30 @@ export function decode(text: string): GameState {
       stats: { ...newGame().stats, ...data.stats },
       settings: { ...newGame().settings, ...data.settings },
     };
+  if (data.version < 3) {
+    const fresh = newGame();
+    data = {
+      ...fresh,
+      ...data,
+      version: 3,
+      resources: stock(data.resources),
+      lifetime: stock(data.lifetime),
+      settings: { ...fresh.settings, ...data.settings },
+      regions: [...data.regions, ...extraRegions(data.seed)],
+      services: { ...fresh.services },
+      activeCity: 'capital',
+      colonies: [],
+      routes: [],
+      campaign: { launched: false, launchRemaining: 0 },
+      lastActive: 0,
+    };
+  }
   if (
     !finite(data.time) ||
     !finite(data.seed) ||
     !Number.isInteger(data.age) ||
     data.age < 0 ||
-    data.age > 1 ||
+    data.age > 10 ||
     !finite(data.nextId) ||
     !finite(data.populationTimer) ||
     !finite(data.happiness) ||
@@ -62,7 +82,8 @@ export function decode(text: string): GameState {
     !Array.isArray(data.buildings) ||
     !data.buildings.length ||
     data.buildings.length > 2304 ||
-    !data.buildings.some((b: Record<string, unknown>) => b.type === 'hall')
+    data.buildings[0]?.type !== 'hall' ||
+    data.buildings.filter((b: Record<string, unknown>) => b.type === 'hall').length !== 1
   )
     throw Error('buildings');
   const position = (p: { x: number; y: number }) =>
@@ -76,7 +97,7 @@ export function decode(text: string): GameState {
     );
   for (const b of data.buildings)
     if (
-      !BUILDING[b.type] ||
+      !Object.prototype.hasOwnProperty.call(BUILDING, b.type) ||
       !position(b) ||
       !Number.isInteger(b.x) ||
       !Number.isInteger(b.y) ||
@@ -102,7 +123,10 @@ export function decode(text: string): GameState {
       !finite(w.timer) ||
       !['idle', 'gather', 'build', 'deliver', 'flee'].includes(w.task) ||
       !RESOURCES.includes(w.resource) ||
-      !validCost(w.cargo)
+      !validCost(w.cargo) ||
+      (w.serviceCargo &&
+        (!['health', 'education', 'culture'].includes(w.serviceCargo.kind) ||
+          !finite(w.serviceCargo.amount)))
     )
       throw Error('worker');
   if (
@@ -111,7 +135,10 @@ export function decode(text: string): GameState {
       (u: GameState['soldiers'][number]) =>
         !position(u) ||
         !finite(u.hp) ||
-        !['guard', 'archer'].includes(u.type) ||
+        !Object.prototype.hasOwnProperty.call(UNITS, u.type) ||
+        !finite(u.id) ||
+        (u.order !== undefined &&
+          !['defend', 'hold', 'move', 'attack', 'retreat'].includes(u.order)) ||
         !Array.isArray(u.path) ||
         !u.path.every(position) ||
         !finite(u.cooldown),
@@ -132,8 +159,8 @@ export function decode(text: string): GameState {
     throw Error('research');
   if (
     !Array.isArray(data.regions) ||
-    data.regions.length !== 4 ||
-    new Set(data.regions.map((r: { id: string }) => r.id)).size !== 4 ||
+    data.regions.length !== 12 ||
+    new Set(data.regions.map((r: { id: string }) => r.id)).size !== 12 ||
     data.regions.some(
       (r: GameState['regions'][number]) =>
         !position(r) ||
@@ -143,7 +170,7 @@ export function decode(text: string): GameState {
         !validCost(r.reward) ||
         typeof r.explored !== 'boolean' ||
         typeof r.discovered !== 'boolean' ||
-        !['woods', 'ruins', 'traders', 'raiders'].includes(r.id),
+        !newGame().regions.some((v) => v.id === r.id),
     )
   )
     throw Error('regions');
@@ -156,7 +183,9 @@ export function decode(text: string): GameState {
     !data.settings ||
     !['de', 'en', 'es', 'fr'].includes(data.settings.language) ||
     !['high', 'low'].includes(data.settings.quality) ||
-    typeof data.settings.sound !== 'boolean'
+    typeof data.settings.sound !== 'boolean' ||
+    typeof data.settings.offline !== 'boolean' ||
+    !['peaceful', 'normal', 'hard'].includes(data.settings.difficulty)
   )
     throw Error('settings');
   if (
@@ -171,19 +200,83 @@ export function decode(text: string): GameState {
   )
     throw Error('entity ids');
   if (data.raid && (!position(data.raid) || !finite(data.raid.hp))) throw Error('raid');
+  if (
+    !data.services ||
+    !['health', 'education', 'culture'].every(
+      (k) => finite(data.services[k]) && data.services[k] <= 100,
+    ) ||
+    !finite(data.lastActive) ||
+    !data.campaign ||
+    typeof data.campaign.launched !== 'boolean' ||
+    !finite(data.campaign.launchRemaining)
+  )
+    throw Error('campaign');
+  const cityIds = ['capital', ...data.regions.map((r: { id: string }) => r.id)];
+  if (
+    !cityIds.includes(data.activeCity) ||
+    !Array.isArray(data.colonies) ||
+    data.colonies.length > 3
+  )
+    throw Error('cities');
+  const present = [data.activeCity, ...data.colonies.map((c: { id: string }) => c.id)];
+  if (new Set(present).size !== present.length || !present.includes('capital'))
+    throw Error('city ids');
+  for (const c of data.colonies) {
+    if (!cityIds.includes(c.id) || !c.data || typeof c.data !== 'object') throw Error('city');
+    // Validate each isolated city through the same full entity validation.
+    decode(JSON.stringify({ ...data, ...c.data, activeCity: 'capital', colonies: [], routes: [] }));
+  }
+  if (
+    !Array.isArray(data.routes) ||
+    data.routes.length > 12 ||
+    new Set(data.routes.map((r: { id: number }) => r.id)).size !== data.routes.length
+  )
+    throw Error('routes');
+  for (const r of data.routes)
+    if (
+      !Number.isInteger(r.id) ||
+      r.id < 1 ||
+      !present.includes(r.from) ||
+      !present.includes(r.to) ||
+      r.from === r.to ||
+      !RESOURCES.includes(r.resource) ||
+      !Number.isInteger(r.amount) ||
+      r.amount < 1 ||
+      r.amount > 200 ||
+      !finite(r.cargo) ||
+      r.cargo > r.amount ||
+      !finite(r.remaining) ||
+      typeof r.repeat !== 'boolean' ||
+      typeof r.paused !== 'boolean'
+    )
+      throw Error('route');
   return data as GameState;
 }
 export function save(state: GameState, storage: StorageLike = localStorage, key = SAVE_KEY) {
+  state.lastActive = Date.now();
   const encoded = encode(state);
   decode(encoded);
   const old = storage.getItem(key);
   if (old) {
     try {
       decode(old);
-      storage.setItem(key + '.backup', old);
+      // Retain the first pre-migration save independently of rotating backups.
+      const original = JSON.parse(old);
+      const previous = original.data ? JSON.parse(original.data) : original;
+      if (previous.version < 3 && !storage.getItem(key + '.v2-original'))
+        storage.setItem(key + '.v2-original', old);
     } catch {
-      /* Preserve corrupt original separately. */ storage.setItem(key + '.damaged', old);
+      storage.setItem(key + '.damaged', old);
     }
+    // Only validated saves can replace the recovery copy.
+    let valid = false;
+    try {
+      decode(old);
+      valid = true;
+    } catch {
+      /* retained above */
+    }
+    if (valid) storage.setItem(key + '.backup', old);
   }
   storage.setItem(key, encoded);
 }
@@ -206,4 +299,21 @@ export function load(
     }
     return { state: null, recovered: false, error: true };
   }
+}
+
+/** Opt-in bounded catch-up uses the real simulation; raids wait for the player. */
+export function catchUp(engine: Engine, now = Date.now()): number {
+  const s = engine.state,
+    elapsed = s.lastActive ? Math.min(7200, Math.max(0, (now - s.lastActive) / 1000)) : 0;
+  s.lastActive = now;
+  if (!s.settings.offline || elapsed < 5) return 0;
+  const previous = engine.onEvent;
+  engine.onEvent = () => {};
+  try {
+    for (let t = 0; t < elapsed; t += 0.5) engine.tick(Math.min(0.5, elapsed - t), false, true);
+  } finally {
+    engine.onEvent = previous;
+  }
+  engine.changed++;
+  return elapsed;
 }

@@ -107,7 +107,7 @@ test('desktop: start, place, assign, upgrade, save/reload, research, explore and
     for (let i = 0; i < 220; i++) engine.tick(0.1);
     ui.renderModal();
   });
-  await expect(page.locator('.region-card').first()).toContainText('Erkundet');
+  await expect(page.locator('.region-grid .region-card').first()).toContainText('Erkundet');
   await page.locator('[data-action="closePanel"]').click();
   await page.locator('#topbar [data-action="settings"]').click();
   for (const [language, label] of [

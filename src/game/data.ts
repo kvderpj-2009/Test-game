@@ -1,4 +1,5 @@
-import type { BuildingDef, ResearchDef } from './types';
+import type { BuildingDef, ResearchDef, Cost } from './types';
+import { ADVANCED_BUILDINGS, ADVANCEMENTS } from './campaign-data';
 export const MAP_SIZE = 48;
 export const CENTER = { x: 22, y: 23 };
 export const BUILDINGS: BuildingDef[] = [
@@ -208,6 +209,8 @@ export const BUILDINGS: BuildingDef[] = [
   },
   {
     id: 'research',
+    service: 'education',
+    serviceValue: 5,
     category: 'community',
     size: 2,
     cost: { wood: 50, stone: 20 },
@@ -219,6 +222,8 @@ export const BUILDINGS: BuildingDef[] = [
   },
   {
     id: 'healer',
+    service: 'health',
+    serviceValue: 25,
     category: 'community',
     size: 2,
     cost: { wood: 40, stone: 15, leather: 5 },
@@ -330,6 +335,7 @@ export const BUILDINGS: BuildingDef[] = [
     workers: 2,
     research: 'bronze',
   },
+  ...ADVANCED_BUILDINGS,
 ];
 export const BUILDING = Object.fromEntries(BUILDINGS.map((b) => [b.id, b])) as Record<
   string,
@@ -344,10 +350,12 @@ export const RESEARCH: ResearchDef[] = [
   { id: 'trade', cost: { knowledge: 40, leather: 5 }, time: 25, requires: ['farming'] },
   {
     id: 'bronze',
+    age: 1,
     cost: { knowledge: 100, tools: 15, stone: 60 },
     time: 45,
     requires: ['crafting', 'farming', 'defense'],
   },
+  ...ADVANCEMENTS,
 ];
 export const AGES = [
   'stoneAge',
@@ -374,7 +382,7 @@ export const MISSION_IDS = [
   'firstVictory',
   'bronzeAge',
 ];
-export const MISSION_REWARDS = [
+export const MISSION_REWARDS: Cost[] = [
   { wood: 25, food: 20 },
   { stone: 25 },
   { food: 35 },
@@ -386,3 +394,19 @@ export const MISSION_REWARDS = [
   { gold: 50, tools: 15 },
   { gold: 100 },
 ];
+
+MISSION_IDS.push(
+  ...Array.from({ length: 9 }, (_, i) => 'achievementAge' + (i + 2)),
+  'achievementEmpire',
+  'achievementPopulation',
+  'achievementLaunch',
+);
+MISSION_REWARDS.push(
+  ...Array.from({ length: 9 }, (_, i) => ({
+    knowledge: 40 + (i + 2) * 15,
+    gold: 20 + (i + 2) * 5,
+  })),
+  { wood: 80, food: 60 },
+  { knowledge: 200, gold: 100 },
+  { gold: 300 },
+);

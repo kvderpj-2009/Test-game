@@ -1,4 +1,5 @@
 import { Application, Container, Graphics, Sprite, Texture } from 'pixi.js';
+import { UNITS } from '../game/campaign-data';
 import type { Engine } from '../game/engine';
 import { BUILDING, CENTER, MAP_SIZE } from '../game/data';
 import { at, ground, random, visible } from '../game/world';
@@ -18,6 +19,9 @@ export class Scene {
   placing: string | null = null;
   moving: number | null = null;
   clearing = false;
+  commanding = false;
+  selectedUnits = new Set<number>();
+  onSoldier: (id: number, multi: boolean) => void = () => {};
   hover: Point | null = null;
   pinned: Point | null = null;
   onSelect: (id: number | null) => void = () => {};
@@ -178,11 +182,18 @@ export class Scene {
       this.pointers.delete(e.pointerId);
       if (!this.dragged && !wasMulti && e.type !== 'pointercancel') {
         const p = this.screenToTile({ x: e.clientX, y: e.clientY });
-        if (this.placing || this.clearing) {
+        if (this.placing || this.clearing || this.commanding) {
           this.pinned = p;
           this.drawGhost(p);
           this.onPlot(p);
-        } else this.onSelect(this.hitBuilding({ x: e.clientX, y: e.clientY }));
+        } else {
+          const soldier = this.engine.state.soldiers.find((u) => {
+            const p = this.tileToScreen(u.x, u.y);
+            return Math.hypot(p.x - e.clientX, p.y - 10 * this.camera.zoom - e.clientY) < 15;
+          });
+          if (soldier) this.onSoldier(soldier.id, e.shiftKey);
+          else this.onSelect(this.hitBuilding({ x: e.clientX, y: e.clientY }));
+        }
       }
       this.previous = null;
       this.down = null;
@@ -448,6 +459,8 @@ export class Scene {
         .stroke({ color: 0xc7ac82, width: 2 });
       g.circle(p.x + 0.5, p.y - 17, 3.5).fill(0xe0c095);
       g.ellipse(p.x, p.y - 19, 4, 1.7).fill(soldier ? 0x9aa79a : 0xb59a64);
+      if (soldier && this.selectedUnits.has(unit.id))
+        g.ellipse(p.x, p.y + 1, 9, 4).stroke({ color: 0xe8d47f, width: 2 });
       if (soldier) {
         g.moveTo(p.x + 7 * facing, p.y - 2)
           .lineTo(p.x + 7 * facing, p.y - 24)
@@ -510,10 +523,10 @@ export class Scene {
       e.roundRect(p.x - 30, p.y - 110, 60, 5, 2).fill(0x5b5546);
       e.roundRect(p.x - 30, p.y - 110, (60 * r.enemy) / r.maxEnemy, 5, 2).fill(0xc48b69);
       for (const u of this.engine.state.soldiers.filter(
-        (u) => u.target === r.id && u.cooldown > 1,
+        (u) => u.target === r.id && u.cooldown > UNITS[u.type].cooldown - 0.3,
       )) {
         const from = iso(u.x, u.y),
-          v = (1.3 - u.cooldown) / 0.3,
+          v = Math.max(0, Math.min(1, (UNITS[u.type].cooldown - u.cooldown) / 0.3)),
           px = from.x + (p.x - from.x) * v,
           py = from.y + (p.y - from.y) * v - 20 - Math.sin(v * Math.PI) * 20;
         e.moveTo(px - 3, py - 2)

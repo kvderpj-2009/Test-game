@@ -1,4 +1,7 @@
 import { BUILDING, CENTER, MAP_SIZE, MISSION_IDS, MISSION_REWARDS, RESEARCH } from './data';
+import { LAUNCH_COST, UNITS } from './campaign-data';
+import { Combat, attack, command, type Formation } from './combat';
+import { Empire, extraRegions } from './empire';
 import { at, entrance, ground, nearest, pathfind, reachable, visible, walkable } from './world';
 import {
   RESOURCES,
@@ -8,14 +11,15 @@ import {
   type Point,
   type Resource,
   type Stock,
+  type Soldier,
   type Worker,
 } from './types';
 export const stock = (values: Cost = {}): Stock =>
   Object.fromEntries(RESOURCES.map((r) => [r, values[r] ?? 0])) as Stock;
-export function newGame(language: GameState['settings']['language'] = 'de'): GameState {
+export function newGame(language: GameState['settings']['language'] = 'de', seed = 73): GameState {
   return {
-    version: 2,
-    seed: 73,
+    version: 3,
+    seed,
     time: 0,
     age: 0,
     resources: stock({ food: 140, wood: 160, stone: 90, knowledge: 25 }),
@@ -48,6 +52,12 @@ export function newGame(language: GameState['settings']['language'] = 'de'): Gam
       resource: (['food', 'wood', 'stone'] as Resource[])[i],
     })),
     soldiers: [],
+    activeCity: 'capital',
+    colonies: [],
+    routes: [],
+    services: { health: 80, education: 35, culture: 35 },
+    campaign: { launched: false, launchRemaining: 0 },
+    lastActive: 0,
     regions: [
       {
         id: 'woods',
@@ -93,6 +103,7 @@ export function newGame(language: GameState['settings']['language'] = 'de'): Gam
         reward: { gold: 70, leather: 25, tools: 20 },
         progress: 0,
       },
+      ...extraRegions(seed),
     ],
     research: [],
     researching: null,
@@ -104,15 +115,22 @@ export function newGame(language: GameState['settings']['language'] = 'de'): Gam
     raidTimer: 600,
     raid: null,
     stats: { built: 0, upgraded: 0, explored: 0, defeated: 0, traded: 0 },
-    settings: { language, sound: false, quality: 'high' },
+    settings: { language, sound: false, quality: 'high', difficulty: 'normal', offline: false },
   };
 }
 export class Engine {
   state: GameState;
   changed = 0;
   onEvent: (key: string, params?: Record<string, string | number>) => void = () => {};
+  empire: Empire;
+  private battles = new Combat(this);
   constructor(state = newGame()) {
     this.state = state;
+    this.empire = new Empire(
+      this,
+      (s) => new Engine(s),
+      () => newGame(this.state.settings.language),
+    );
   }
   get capacity() {
     return this.state.buildings
@@ -170,7 +188,11 @@ export class Engine {
   placement(type: string, x: number, y: number, ignore?: number): string | null {
     const def = BUILDING[type];
     if (!def) return 'invalid';
-    if (def.research && !this.state.research.includes(def.research)) return 'needsResearch';
+    if (
+      (def.age ?? 0) > this.state.age ||
+      (def.research && !this.state.research.includes(def.research))
+    )
+      return 'needsResearch';
     for (let dx = 0; dx < def.size; dx++)
       for (let dy = 0; dy < def.size; dy++) {
         const px = x + dx,
@@ -178,7 +200,7 @@ export class Engine {
         if (px < 1 || py < 1 || px >= MAP_SIZE - 1 || py >= MAP_SIZE - 1) return 'invalid';
         if (!visible(this.state, px, py)) return 'unexplored';
         if (at(this.state, px, py, ignore)) return 'occupied';
-        if (ground(this.state, px, py) === 'water') return 'waterBlocked';
+        if (ground(this.state, px, py) === 'water' && type !== 'bridge') return 'waterBlocked';
         if (['forest', 'rock'].includes(ground(this.state, px, py))) return 'clearFirst';
       }
     if (
@@ -259,7 +281,7 @@ export class Engine {
       !b ||
       b.remaining ||
       b.level >= 3 ||
-      ['road', 'wall', 'gate', 'fire', 'plaza', 'trap'].includes(b.type)
+      ['road', 'bridge', 'wall', 'gate', 'fire', 'plaza', 'trap'].includes(b.type)
     )
       return 'invalid';
     if (
@@ -277,23 +299,30 @@ export class Engine {
     this.changed++;
     return null;
   }
-  demolish(id: number): string | null {
+  demolish(id: number, refund = true): string | null {
     const b = this.state.buildings.find((b) => b.id === id);
     if (!b || b.type === 'hall') return 'invalid';
     this.state.buildings = this.state.buildings.filter((v) => v.id !== id);
-    this.resetWorkers(id);
-    this.add(
-      Object.fromEntries(
-        Object.entries(BUILDING[b.type].cost).map(([r, n]) => [r, Math.floor(n * 0.5)]),
-      ),
-    );
+    this.resetWorkers(id, b);
+    if (refund)
+      this.add(
+        Object.fromEntries(
+          Object.entries(BUILDING[b.type].cost).map(([r, n]) => [r, Math.floor(n * 0.5)]),
+        ),
+      );
     this.changed++;
     return null;
   }
-  resetWorkers(id: number) {
+  refund(cost: Cost) {
+    for (const [r, n] of Object.entries(cost)) this.state.resources[r as Resource] += n;
+  }
+  resetWorkers(id: number, removed?: Building) {
     for (const w of this.state.workers) {
       if (w.assigned === id && !this.state.buildings.some((b) => b.id === id)) w.assigned = null;
       if (w.target === id || w.assigned === id) {
+        const job = this.state.buildings.find((b) => b.id === w.target) ?? removed;
+        if (w.task === 'gather' && job && BUILDING[job.type].input)
+          this.refund(BUILDING[job.type].input!);
         w.task = 'idle';
         w.path = [];
         w.timer = 0;
@@ -323,6 +352,8 @@ export class Engine {
     if (!r.requires.every((r) => this.state.research.includes(r))) return 'needsResearch';
     if (id === 'bronze' && (this.state.workers.length < 10 || this.state.stats.explored < 1))
       return 'bronzeRequirement';
+    if ((r.population ?? 0) > this.state.workers.length) return 'populationRequirement';
+    if (r.building && !this.has(r.building)) return 'buildingRequirement';
     if (!this.pay(r.cost)) return 'notEnough';
     this.state.researching = { id, remaining: r.time };
     return null;
@@ -334,42 +365,39 @@ export class Engine {
     r.progress = 20;
     return null;
   }
-  train(type: 'guard' | 'archer'): string | null {
+  train(type: string): string | null {
+    const d = UNITS[type];
+    if (!d) return 'invalid';
+    if (d.age > this.state.age) return 'needsResearch';
     if (!this.has('barracks')) return 'needsBarracks';
-    if (this.state.soldiers.length >= 12) return 'armyLimit';
-    if (!this.pay(type === 'guard' ? { food: 25, wood: 15 } : { food: 20, wood: 25, leather: 3 }))
-      return 'notEnough';
+    if (this.state.soldiers.length >= 24) return 'armyLimit';
+    if (!this.pay(d.cost)) return 'notEnough';
     const b = this.state.buildings.find((b) => b.type === 'barracks')!;
-    const p = entrance(this.state, b);
     this.state.soldiers.push({
       id: this.state.nextId++,
       type,
-      hp: type === 'guard' ? 100 : 65,
-      ...p,
+      hp: d.hp,
+      ...entrance(this.state, b),
       path: [],
       cooldown: 0,
       target: null,
+      order: 'defend',
     });
     return null;
   }
-  attack(id: string): string | null {
-    const r = this.state.regions.find((r) => r.id === id);
-    if (!r || !r.explored || r.enemy <= 0) return 'invalid';
-    if (!this.state.soldiers.length) return 'needsArmy';
-    const target = nearest(this.state, r, () => true);
-    if (!target) return 'unreachable';
-    let sent = 0;
-    for (const u of this.state.soldiers) {
-      const path = pathfind(this.state, u, target);
-      if (path.length || Math.hypot(u.x - target.x, u.y - target.y) < 1) {
-        u.path = path;
-        u.target = id;
-        sent++;
-      }
-    }
-    return sent ? null : 'unreachable';
+  attack(id: string, ids?: number[]) {
+    return attack(this, id, ids);
+  }
+  command(
+    ids: number[],
+    order: NonNullable<Soldier['order']>,
+    point?: Point,
+    formation?: Formation,
+  ) {
+    return command(this, ids, order, point, formation);
   }
   trade(resource: Resource, buy: boolean): string | null {
+    if (!['food', 'wood', 'stone', 'leather', 'tools'].includes(resource)) return 'invalid';
     if (!this.has('market') || !this.state.regions.find((r) => r.id === 'traders')?.explored)
       return 'needsMarket';
     if (!this.pay(buy ? { gold: 10 } : { [resource]: 30 })) return 'notEnough';
@@ -388,7 +416,7 @@ export class Engine {
     return true;
   }
   chooseTask(w: Worker) {
-    if (Object.keys(w.cargo).length) {
+    if (Object.keys(w.cargo).length || w.serviceCargo) {
       const b = this.state.buildings.find((b) => b.id === w.assigned) ?? this.state.buildings[0];
       this.route(w, entrance(this.state, b, w), 'deliver');
       return;
@@ -403,9 +431,13 @@ export class Engine {
       this.route(w, entrance(this.state, construction, w), 'build');
       return;
     }
-    const job = this.state.buildings.find((b) => b.id === w.assigned && !b.remaining);
+    const job = this.state.buildings.find((b) => b.id === w.assigned && !b.remaining && !b.paused);
     const def = job ? BUILDING[job.type] : null;
-    if (def?.input && !this.pay(def.input)) {
+    if (w.assigned && !job) {
+      w.timer = 1;
+      return;
+    }
+    if (def?.input && !this.canPay(def.input)) {
       w.timer = 2;
       return;
     }
@@ -429,10 +461,8 @@ export class Engine {
       return;
     }
     const dest = site?.point ?? entrance(this.state, job ?? this.state.buildings[0], w);
-    if (!this.route(w, dest, 'gather')) {
-      if (def?.input) this.add(def.input);
-      return;
-    }
+    if (!this.route(w, dest, 'gather')) return;
+    if (def?.input) this.pay(def.input);
     w.target = job?.id ?? null;
     w.timer = job ? 5 : 4;
   }
@@ -457,12 +487,21 @@ export class Engine {
       unit.y += (dy / d) * step;
     }
   }
-  tick(dt: number) {
+  tick(dt: number, background = false, offline = false) {
     const s = this.state;
     s.time += dt;
     const foodNeed = s.workers.length * 0.035 * dt;
     s.resources.food = Math.max(0, s.resources.food - foodNeed);
-    const safety = this.has('tower') ? 10 : 0;
+    const safety = s.buildings.some((b) => !b.remaining && (BUILDING[b.type].range ?? 0) >= 8)
+      ? 10
+      : 0;
+    for (const kind of ['health', 'education', 'culture'] as const)
+      s.services[kind] = Math.max(0, s.services[kind] - dt * s.workers.length * 0.003);
+    if (this.has('plaza')) s.services.culture = Math.min(100, s.services.culture + dt * 0.6);
+    const unmet =
+      (s.age >= 3 && s.services.health < 20 ? 10 : 0) +
+      (s.age >= 4 && s.services.education < 20 ? 10 : 0) +
+      (s.age >= 5 && s.services.culture < 20 ? 10 : 0);
     const amenities =
       (this.has('fire') ? 5 : 0) + (this.has('plaza') ? 5 : 0) + (this.has('healer') ? 8 : 0);
     s.happiness = Math.min(
@@ -474,12 +513,21 @@ export class Engine {
           safety +
           (s.resources.food > 20 ? 15 : -35) +
           (this.housing >= s.workers.length ? 0 : -25) -
-          (s.raid ? 25 : 0),
+          (s.raid ? 25 : 0) -
+          unmet,
       ),
     );
     const productivity = s.happiness < 40 ? 0.55 : 1;
     for (const w of s.workers) {
-      if (s.raid && Math.hypot(w.x - s.raid.x, w.y - s.raid.y) < 5 && w.task !== 'flee') {
+      if (
+        !offline &&
+        s.raid &&
+        Math.hypot(w.x - s.raid.x, w.y - s.raid.y) < 5 &&
+        w.task !== 'flee'
+      ) {
+        const job = s.buildings.find((b) => b.id === w.target);
+        if (w.task === 'gather' && job && BUILDING[job.type].input)
+          this.refund(BUILDING[job.type].input!);
         w.path = pathfind(s, w, entrance(s, s.buildings[0]));
         w.task = 'flee';
         w.timer = 5;
@@ -527,6 +575,13 @@ export class Engine {
       if (w.task === 'deliver') {
         this.add(w.cargo);
         w.cargo = {};
+        if (w.serviceCargo) {
+          s.services[w.serviceCargo.kind] = Math.min(
+            100,
+            s.services[w.serviceCargo.kind] + w.serviceCargo.amount,
+          );
+          w.serviceCargo = undefined;
+        }
         w.task = 'idle';
         w.target = null;
         continue;
@@ -546,6 +601,11 @@ export class Engine {
               ]),
             )
           : { [w.resource]: 6 };
+        if (def?.service)
+          w.serviceCargo = {
+            kind: def.service,
+            amount: (def.serviceValue ?? 10) * (b?.level ?? 1),
+          };
         w.task = 'idle';
       }
       if (w.task === 'flee') w.task = 'idle';
@@ -573,29 +633,41 @@ export class Engine {
         this.onEvent('newCitizen');
       }
     } else s.populationTimer = 0;
-    if (s.researching) {
+    if (!background && s.researching) {
       s.researching.remaining -= dt;
       if (s.researching.remaining <= 0) {
         const id = s.researching.id;
         s.research.push(id);
         s.researching = null;
-        if (id === 'bronze') s.age = 1;
+        const age = RESEARCH.find((r) => r.id === id)?.age;
+        if (age !== undefined) s.age = Math.max(s.age, age);
         this.changed++;
         this.onEvent('researchComplete');
       }
     }
-    for (const r of s.regions)
-      if (r.progress > 0) {
-        r.progress = Math.max(0, r.progress - dt);
-        if (!r.progress) {
-          r.explored = true;
-          s.stats.explored++;
-          if (!r.enemy) this.add(r.reward);
-          this.changed++;
-          this.onEvent('regionFound');
+    if (!background)
+      for (const r of s.regions)
+        if (r.progress > 0) {
+          r.progress = Math.max(0, r.progress - dt);
+          if (!r.progress) {
+            r.explored = true;
+            s.stats.explored++;
+            if (!r.enemy) this.add(r.reward);
+            this.changed++;
+            this.onEvent('regionFound');
+          }
         }
+    if (!offline) this.combat(dt);
+    if (background) return;
+    this.empire.tick(dt, offline);
+    if (s.campaign.launchRemaining > 0) {
+      s.campaign.launchRemaining = Math.max(0, s.campaign.launchRemaining - dt);
+      if (!s.campaign.launchRemaining) {
+        s.campaign.launched = true;
+        this.changed++;
+        this.onEvent('campaignWon');
       }
-    this.combat(dt);
+    }
     const done = [
       this.has('hut'),
       this.has('lumber'),
@@ -607,6 +679,10 @@ export class Engine {
       s.stats.explored >= 1,
       s.stats.defeated >= 1,
       s.age >= 1,
+      ...Array.from({ length: 9 }, (_, i) => s.age >= i + 2),
+      this.empire.cities().length >= 2,
+      this.empire.cities().reduce((n, c) => n + c.data.workers.length, 0) >= 100,
+      s.campaign.launched,
     ];
     done.forEach((ok, i) => {
       if (ok && !s.missions.includes(MISSION_IDS[i])) {
@@ -616,84 +692,34 @@ export class Engine {
       }
     });
   }
-  combat(dt: number) {
+  repair(id: number): string | null {
+    const b = this.state.buildings.find((b) => b.id === id);
+    if (!b || b.hp >= this.maxHP(b)) return 'invalid';
+    const cost = {
+      wood: Math.ceil((1 - b.hp / this.maxHP(b)) * 15),
+      stone: Math.ceil((1 - b.hp / this.maxHP(b)) * 10),
+    };
+    if (!this.pay(cost)) return 'notEnough';
+    b.hp = this.maxHP(b);
+    return null;
+  }
+  pauseBuilding(id: number): string | null {
+    const b = this.state.buildings.find((b) => b.id === id);
+    if (!b || !BUILDING[b.type].workers) return 'invalid';
+    b.paused = !b.paused;
+    return null;
+  }
+  launch(): string | null {
     const s = this.state;
-    for (const u of s.soldiers) {
-      this.moveUnit(u, dt, 1.5);
-      u.cooldown = Math.max(0, u.cooldown - dt);
-      const r = s.regions.find((r) => r.id === u.target);
-      if (
-        r &&
-        r.enemy > 0 &&
-        Math.hypot(u.x - r.x, u.y - r.y) < (u.type === 'archer' ? 5 : 2.4) &&
-        !u.cooldown
-      ) {
-        r.enemy = Math.max(0, r.enemy - (u.type === 'archer' ? 14 : 11));
-        u.cooldown = 1.3;
-        u.hp -= u.type === 'archer' ? 3 : 7;
-        if (!r.enemy) {
-          s.stats.defeated++;
-          this.add(r.reward);
-          this.changed++;
-          this.onEvent('victory');
-          for (const ally of s.soldiers)
-            if (ally.target === r.id) {
-              ally.target = null;
-              ally.path = pathfind(s, ally, entrance(s, s.buildings[0]));
-            }
-        }
-      }
-    }
-    s.soldiers = s.soldiers.filter((u) => u.hp > 0);
-    if (s.research.includes('defense')) {
-      s.raidTimer -= dt;
-      if (s.raidTimer <= 0 && !s.raid) {
-        s.raidTimer = 600;
-        s.raid = { hp: 100 + s.stats.defeated * 30, x: 27, y: 30 };
-        this.onEvent('raidWarning');
-      }
-    }
-    if (s.raid) {
-      const raid = s.raid;
-      const target = s.buildings
-        .filter((b) => !['road', 'fire', 'plaza'].includes(b.type))
-        .sort(
-          (a, b) => Math.hypot(a.x - raid.x, a.y - raid.y) - Math.hypot(b.x - raid.x, b.y - raid.y),
-        )[0];
-      for (const b of s.buildings) {
-        const d = BUILDING[b.type];
-        if (!b.remaining && d.damage && Math.hypot(b.x - raid.x, b.y - raid.y) < (d.range ?? 0))
-          raid.hp -= d.damage * b.level * dt;
-      }
-      for (const u of s.soldiers) if (Math.hypot(u.x - raid.x, u.y - raid.y) < 6) raid.hp -= 6 * dt;
-      if (target) {
-        const d = Math.hypot(target.x - raid.x, target.y - raid.y);
-        if (d > 2) {
-          raid.x += ((target.x - raid.x) / d) * dt * 0.45;
-          raid.y += ((target.y - raid.y) / d) * dt * 0.45;
-        } else {
-          target.hp -= 5 * dt;
-          if (target.hp <= 0) {
-            if (target.type === 'hall') {
-              this.pay({
-                food: Math.min(30, s.resources.food),
-                wood: Math.min(30, s.resources.wood),
-              });
-              target.hp = this.maxHP(target);
-              s.raid = null;
-              this.onEvent('raidLoss');
-            } else {
-              this.demolish(target.id);
-              this.onEvent('buildingLost');
-            }
-          }
-        }
-      }
-      if (raid.hp <= 0) {
-        s.raid = null;
-        this.add({ wood: 20, food: 20 });
-        this.onEvent('raidWon');
-      }
-    }
+    if (s.campaign.launched || s.campaign.launchRemaining) return 'invalid';
+    if (s.age < 10 || !this.has('launchpad')) return 'launchRequirement';
+    if (this.empire.cities().length < 2 || s.stats.explored < 6) return 'empireRequirement';
+    if (!this.pay(LAUNCH_COST)) return 'notEnough';
+    s.campaign.launchRemaining = 60;
+    this.changed++;
+    return null;
+  }
+  combat(dt: number) {
+    this.battles.tick(dt);
   }
 }

@@ -1,4 +1,7 @@
 import { BUILDING, BUILDINGS, AGES, MISSION_IDS, MISSION_REWARDS, RESEARCH } from '../game/data';
+import { worldView, armyView, campaignView, servicesView, cityName } from './campaign-views';
+import type { Formation } from '../game/combat';
+import { catchUp } from '../game/save';
 import { Engine, newGame } from '../game/engine';
 import { decode, encode, load, MANUAL_KEY, save, SAVE_KEY } from '../game/save';
 import {
@@ -30,6 +33,8 @@ export class GameUI {
   category: Category = 'housing';
   panel: Panel = null;
   selected: number | null = null;
+  selectedUnits = new Set<number>();
+  formation: Formation = 'line';
   rotation = 0;
   confirmAction: (() => void) | null = null;
   root: HTMLElement;
@@ -65,6 +70,9 @@ export class GameUI {
         this.engine.state.settings.quality = el.value as 'high' | 'low';
         this.scene.app.ticker.maxFPS = el.value === 'low' ? 30 : 60;
       }
+      if (el.id === 'difficulty')
+        this.engine.state.settings.difficulty = el.value as 'peaceful' | 'normal' | 'hard';
+      if (el.id === 'formation') this.formation = el.value as Formation;
       if (el.id === 'import-file') {
         const file = (el as unknown as HTMLInputElement).files?.[0];
         if (file) void this.import(file);
@@ -124,17 +132,30 @@ export class GameUI {
       this.renderInspector();
     };
     this.scene.onPlot = (p) => this.plot(p);
+    this.scene.onSoldier = (id, multi) => {
+      if (!this.started) return;
+      if (!multi) this.selectedUnits.clear();
+      this.selectedUnits.add(id);
+      this.scene.selectedUnits = this.selectedUnits;
+      this.panel = 'army';
+      this.renderModal();
+    };
     this.scene.onFrame = (dt) => this.frame(dt);
     this.scene.onCamera = () => {
       const map = document.querySelector<HTMLCanvasElement>('#minimap');
       if (map) this.scene.minimap(map);
     };
-    this.engine.onEvent = (key) => {
-      this.toast(t(key));
+    this.engine.onEvent = (key, params) => {
+      this.toast((params?.city ? cityName(this.engine, String(params.city)) + ': ' : '') + t(key));
       this.chime();
     };
     document.addEventListener('visibilitychange', () => {
       if (document.hidden && this.started) this.persist();
+      else if (this.started) {
+        const elapsed = catchUp(this.engine);
+        if (elapsed) this.toast(t('offlineReport', { n: Math.floor(elapsed / 60) }));
+        this.persist();
+      }
     });
     window.addEventListener('pagehide', () => {
       if (this.started) this.persist();
@@ -169,7 +190,7 @@ export class GameUI {
         const map = document.querySelector<HTMLCanvasElement>('#minimap');
         if (map) this.scene.minimap(map);
       }
-      if (this.panel && ['world', 'researchTab', 'army', 'economy'].includes(this.panel))
+      if (this.panel && ['world', 'researchTab', 'army', 'economy', 'quests'].includes(this.panel))
         this.renderModal();
     }
   }
@@ -196,7 +217,7 @@ export class GameUI {
   }
   renderHeader() {
     this.el('topbar').innerHTML =
-      `<div class="brand"><img src="/icon.svg" alt=""/><span>POCKET<span>CIVILIZATION</span></span></div><button class="settlement" data-action="economy"><span class="eyebrow">${t(AGES[this.engine.state.age])} <b>I${this.engine.state.age ? 'I' : ''}</b></span><strong>${t('village')}</strong></button><div class="resources">${(['food', 'wood', 'stone', 'knowledge'] as Resource[]).map((r) => `<button class="resource ${r}" data-action="economy" title="${t(r)}">${icon(r)}<span><strong data-stock="${r}"></strong><small>${t(r)}</small></span></button>`).join('')}</div><button class="population resource" data-action="economy">${icon('population')}<span><strong id="population-count"></strong><small>${t('population')}</small></span></button><div class="time-controls"><span id="day-count"></span>${button('pause', '', `icon-button ${this.paused ? 'active' : ''}`, this.paused ? 'play' : 'pause')}${button('speed', `${this.speed}×`, 'speed-button')}${button('settings', '', 'icon-button', 'settings')}</div>`;
+      `<div class="brand"><img src="/icon.svg" alt=""/><span>POCKET<span>CIVILIZATION</span></span></div><button class="settlement" data-action="economy"><span class="eyebrow">${t(AGES[this.engine.state.age])} <b>${this.engine.state.age + 1} / 11</b></span><strong>${cityName(this.engine, this.engine.state.activeCity)}</strong></button><div class="resources">${(['food', 'wood', 'stone', 'knowledge'] as Resource[]).map((r) => `<button class="resource ${r}" data-action="economy" title="${t(r)}">${icon(r)}<span><strong data-stock="${r}"></strong><small>${t(r)}</small></span></button>`).join('')}</div><button class="population resource" data-action="economy">${icon('population')}<span><strong id="population-count"></strong><small>${t('population')}</small></span></button><div class="time-controls"><span id="day-count"></span>${button('pause', '', `icon-button ${this.paused ? 'active' : ''}`, this.paused ? 'play' : 'pause')}${button('speed', `${this.speed}×`, 'speed-button')}${button('settings', '', 'icon-button', 'settings')}</div>`;
     const pause = this.el('topbar').querySelector('[data-action="pause"]');
     pause?.setAttribute('aria-label', t(this.paused ? 'play' : 'pause'));
     this.el('topbar')
@@ -228,9 +249,10 @@ export class GameUI {
     this.el('journey').hidden = !this.started;
     const s = this.engine.state;
     const first = MISSION_IDS.findIndex((id) => !s.missions.includes(id));
-    const shown = MISSION_IDS.slice(Math.max(0, first - 1), Math.max(0, first - 1) + 3);
+    const start = first < 0 ? MISSION_IDS.length - 3 : Math.max(0, first - 1);
+    const shown = MISSION_IDS.slice(start, start + 3);
     this.el('journey').innerHTML =
-      `<div class="eyebrow">${icon('flag')}${t('journey')}<span>${s.missions.length} / ${MISSION_IDS.length}</span></div><h2>${t('firstSteps')}</h2><p class="muted journey-intro">${t('questHint')}</p><div class="quest-list">${shown.map((id) => `<button data-action="quest:${id}" class="quest ${s.missions.includes(id) ? 'done' : ''}"><span class="quest-check">${s.missions.includes(id) ? icon('check') : ''}</span><span>${t(id)}</span>${icon('chevron')}</button>`).join('')}</div><button data-action="quests" class="text-button">${t('allQuests')}${icon('arrow')}</button><div class="settler-advice"><span class="eyebrow">${t('tutorial')}</span><p>${t(!this.engine.has('hut') ? 'tutorial1' : !this.engine.has('lumber') ? 'tutorial2' : !s.research.includes('farming') ? 'tutorial3' : 'tutorial4')}</p></div>`;
+      `<div class="eyebrow">${icon('flag')}${t('journey')}<span>${s.missions.length} / ${MISSION_IDS.length}</span></div><h2>${t(s.age > 0 ? 'campaign' : 'firstSteps')}</h2><p class="muted journey-intro">${t('questHint')}</p><div class="quest-list">${shown.map((id) => `<button data-action="quest:${id}" class="quest ${s.missions.includes(id) ? 'done' : ''}"><span class="quest-check">${s.missions.includes(id) ? icon('check') : ''}</span><span>${t(id)}</span>${icon('chevron')}</button>`).join('')}</div><button data-action="quests" class="text-button">${t('allQuests')}${icon('arrow')}</button><div class="settler-advice"><span class="eyebrow">${t('tutorial')}</span><p>${t(!this.engine.has('hut') ? 'tutorial1' : !this.engine.has('lumber') ? 'tutorial2' : !s.research.includes('farming') ? 'tutorial3' : 'tutorial4')}</p></div>`;
   }
   renderDock() {
     this.el('dock').hidden = !this.started;
@@ -244,8 +266,10 @@ export class GameUI {
       (b) => b.category === this.category && b.id !== 'hall',
     )
       .map((b) => {
-        const locked = b.research && !this.engine.state.research.includes(b.research);
-        return `<button class="building-card ${locked ? 'locked' : ''}" data-action="build:${b.id}" title="${locked ? t('requires') + ': ' + techName(b.research!) : description(b.id, b.category, b.storage)}"><span class="card-art"><img src="${thumbnail(b.id)}" alt="" loading="lazy"/>${locked ? icon('lock') : ''}</span><strong>${t(b.id)}</strong>${cost(b.cost)}<span class="card-time">${icon('clock')}${b.time}s</span></button>`;
+        const locked =
+          (b.age ?? 0) > this.engine.state.age ||
+          (b.research && !this.engine.state.research.includes(b.research));
+        return `<button class="building-card ${locked ? 'locked' : ''}" data-action="build:${b.id}" title="${locked ? t('requires') + ': ' + (b.age ? t(AGES[b.age]) : techName(b.research!)) : description(b.id, b.category, b.storage)}"><span class="card-art"><img src="${thumbnail(b.id)}" alt="" loading="lazy"/>${locked ? icon('lock') : ''}</span><strong>${t(b.id)}</strong>${cost(b.cost)}<span class="card-time">${icon('clock')}${b.time}s</span></button>`;
       })
       .join('')}</div>`;
     el.querySelector('[data-action="clear"]')?.setAttribute('aria-label', t('clear'));
@@ -265,7 +289,7 @@ export class GameUI {
   renderWelcome() {
     const el = this.el('welcome');
     el.hidden = this.started;
-    el.innerHTML = `<div class="welcome-card"><span class="eyebrow"><span class="small-rule"></span>${t('chapter')}</span><h1>${t('yourStory')}</h1><p>${t('welcomeText')}</p><div class="welcome-buttons">${this.hasSave ? button('continue', t('continue'), 'primary', 'play') : ''}${button('new', t('newGame'), this.hasSave ? 'secondary' : 'primary', 'arrow')}</div><div class="welcome-links">${button('saves', t('saves'))}${button('settings', t('settings'))}${button('credits', t('credits'))}</div><span class="welcome-foot">${icon('leaf')}${t('subtitle')}</span></div><div class="world-label"><span>48 × 48</span>${t('village')}<small>${t('stoneAge')}</small></div>`;
+    el.innerHTML = `<div class="welcome-card"><span class="eyebrow"><span class="small-rule"></span>${t('chapter')}</span><h1>${t('yourStory')}</h1><p>${t('welcomeText')}</p><div class="welcome-buttons">${this.hasSave ? button('continue', t('continue'), 'primary', 'play') : ''}${button('new', t('newGame'), this.hasSave ? 'secondary' : 'primary', 'arrow')}</div><label class="world-seed">${t('worldSeed')}<input id="world-seed" type="number" min="1" max="2147483647" value="73"/></label><div class="welcome-links">${button('saves', t('saves'))}${button('settings', t('settings'))}${button('credits', t('credits'))}</div><span class="welcome-foot">${icon('leaf')}${t('subtitle')}</span></div><div class="world-label"><span>48 × 48</span>${t('village')}<small>${t('stoneAge')}</small></div>`;
   }
   renderInspector() {
     const el = this.el('inspector');
@@ -279,7 +303,7 @@ export class GameUI {
     }
     const d = BUILDING[b.type],
       count = this.engine.state.workers.filter((w) => w.assigned === b.id).length;
-    el.innerHTML = `<div class="inspector-top"><span class="eyebrow">${t(d.category)} · ${t('level', { n: b.level })}</span>${button('deselect', '', 'icon-button', 'close')}</div><div class="inspect-art"><img src="${thumbnail(b.type)}" alt=""/></div><h2>${t(b.type)}</h2><p class="muted">${description(b.type, d.category, d.storage)}</p>${b.remaining ? `<div class="construction"><span>${t('construction')}</span><b>${Math.ceil(b.remaining)}s</b><progress value="${Math.max(0, (b.level > 1 ? 12 : d.time) - b.remaining)}" max="${b.level > 1 ? 12 : d.time}"></progress></div>` : ''}<div class="building-stats">${d.housing ? `<div>${t('homes')}<b>${d.housing * b.level}</b></div>` : ''}${d.storage ? `<div>${t('capacity')}<b>+${d.storage * b.level}${d.stores ? ' · ' + d.stores.map((r) => t(r)).join(', ') : ''}</b></div>` : ''}<div>${t('health')}<b>${Math.ceil(b.hp)} / ${this.engine.maxHP(b)}</b></div></div>${d.output ? `<div class="production-line"><small>${t('output')}</small>${cost(Object.fromEntries(Object.entries(d.output).map(([r, n]) => [r, n * (1 + (b.level - 1) * 0.4)])))}</div>${d.input ? `<div class="production-line"><small>${t('input')}</small>${cost(d.input)}</div>` : ''}<div class="worker-control"><span>${t('workers')}<small>${t('freeWorkers', { n: this.engine.state.workers.filter((w) => w.assigned === null).length })}</small></span><div>${button('unassign', '', 'icon-button', 'minus')}<b>${count} / ${d.workers}</b>${button('assign', '', 'icon-button', 'plus')}</div></div>` : ''}<div class="inspector-actions">${b.level < 3 && !['road', 'wall', 'gate', 'trap', 'fire', 'plaza'].includes(b.type) ? button('upgrade', `${t('upgrade')}${cost(b.type === 'hall' ? { wood: 80 * b.level, stone: 50 * b.level, knowledge: 30 } : this.engine.upgradeCost(b))}`, 'primary', 'plus') : ''}${b.type !== 'hall' ? `<div class="split">${button('move', t('move'), 'secondary', 'move')}${button('remove', t('remove'), 'quiet danger', 'trash')}</div>` : ''}${b.type === 'market' ? button('economy', t('trade'), 'secondary', 'gold') : ''}</div>`;
+    el.innerHTML = `<div class="inspector-top"><span class="eyebrow">${t(d.category)} · ${t('level', { n: b.level })}</span>${button('deselect', '', 'icon-button', 'close')}</div><div class="inspect-art"><img src="${thumbnail(b.type)}" alt=""/></div><h2>${t(b.type)}</h2><p class="muted">${description(b.type, d.category, d.storage)}</p>${b.remaining ? `<div class="construction"><span>${t('construction')}</span><b>${Math.ceil(b.remaining)}s</b><progress value="${Math.max(0, (b.level > 1 ? 12 : d.time) - b.remaining)}" max="${b.level > 1 ? 12 : d.time}"></progress></div>` : ''}<div class="building-stats">${d.housing ? `<div>${t('homes')}<b>${d.housing * b.level}</b></div>` : ''}${d.storage ? `<div>${t('capacity')}<b>+${d.storage * b.level}${d.stores ? ' · ' + d.stores.map((r) => t(r)).join(', ') : ''}</b></div>` : ''}<div>${t('health')}<b>${Math.ceil(b.hp)} / ${this.engine.maxHP(b)}</b></div></div>${d.output ? `<div class="production-line"><small>${t('output')}</small>${cost(Object.fromEntries(Object.entries(d.output).map(([r, n]) => [r, n * (1 + (b.level - 1) * 0.4)])))}</div>${d.input ? `<div class="production-line"><small>${t('input')}</small>${cost(d.input)}</div>` : ''}<div class="worker-control"><span>${t('workers')}<small>${t('freeWorkers', { n: this.engine.state.workers.filter((w) => w.assigned === null).length })}</small></span><div>${button('unassign', '', 'icon-button', 'minus')}<b>${count} / ${d.workers}</b>${button('assign', '', 'icon-button', 'plus')}</div></div>` : ''}${d.service ? `<p>${t('serviceSupply')}: ${t(d.service === 'health' ? 'healthNeed' : d.service)} +${d.serviceValue}</p>` : ''}<div class="inspector-actions">${b.hp < this.engine.maxHP(b) ? button('repair', t('repair'), 'secondary') : ''}${d.workers ? button('productionPause', t(b.paused ? 'productionResume' : 'productionPause'), 'secondary') : ''}${b.level < 3 && !['road', 'bridge', 'wall', 'gate', 'trap', 'fire', 'plaza'].includes(b.type) ? button('upgrade', `${t('upgrade')}${cost(b.type === 'hall' ? { wood: 80 * b.level, stone: 50 * b.level, knowledge: 30 } : this.engine.upgradeCost(b))}`, 'primary', 'plus') : ''}${b.type !== 'hall' ? `<div class="split">${button('move', t('move'), 'secondary', 'move')}${button('remove', t('remove'), 'quiet danger', 'trash')}</div>` : ''}${b.type === 'market' ? button('economy', t('trade'), 'secondary', 'gold') : ''}</div>`;
     for (const [a, k] of [
       ['assign', 'assign'],
       ['unassign', 'unassign'],
@@ -302,6 +326,21 @@ export class GameUI {
   }
   plot(p: Point) {
     if (!this.started) return;
+    if (this.scene.commanding) {
+      if (
+        this.result(
+          this.engine.command(
+            [...this.selectedUnits],
+            'move',
+            { x: p.x + 0.5, y: p.y + 0.5 },
+            this.formation,
+          ),
+        )
+      ) {
+        this.cancelPlacement();
+      }
+      return;
+    }
     if (this.scene.clearing) {
       this.result(this.engine.clear(p.x, p.y));
       return;
@@ -321,6 +360,7 @@ export class GameUI {
   cancelPlacement() {
     this.scene.setPlacement(null);
     this.scene.clearing = false;
+    this.scene.commanding = false;
     this.el('placement').innerHTML = '';
     this.renderBuild();
   }
@@ -360,6 +400,8 @@ export class GameUI {
       if (r.state) {
         this.engine.state = r.state;
         this.engine.changed++;
+        const elapsed = key === SAVE_KEY ? catchUp(this.engine) : 0;
+        this.resetInteraction();
         setLanguage(r.state.settings.language);
         this.started = true;
         this.selected = null;
@@ -368,6 +410,8 @@ export class GameUI {
         this.scene.center();
         this.render();
         if (r.recovered) this.toast(t('recovered'));
+        else if (elapsed) this.toast(t('offlineReport', { n: Math.floor(elapsed / 60) }));
+        this.persist();
       } else this.toast(t(r.error ? 'corrupt' : 'emptySlot'));
     } catch {
       this.toast(t('corrupt'));
@@ -388,7 +432,16 @@ export class GameUI {
     else this.doNew();
   }
   doNew() {
-    this.engine.state = newGame(getLanguage());
+    const value = Number(
+      (document.querySelector('#world-seed') as HTMLInputElement | null)?.value ?? 73,
+    );
+    const settings = { ...this.engine.state.settings };
+    this.engine.state = newGame(
+      getLanguage(),
+      Number.isInteger(value) && value > 0 && value <= 2147483647 ? value : 73,
+    );
+    this.engine.state.settings = settings;
+    this.resetInteraction();
     this.engine.changed++;
     this.started = true;
     this.paused = false;
@@ -403,6 +456,7 @@ export class GameUI {
   }
   action(action: string) {
     const [verb, arg] = action.split(':');
+    if (this.campaignAction(verb, arg)) return;
     if (verb === 'new') {
       this.startNew();
       return;
@@ -434,6 +488,10 @@ export class GameUI {
     }
     if (verb === 'build') {
       const d = BUILDING[arg];
+      if ((d.age ?? 0) > this.engine.state.age) {
+        this.toast(t('requires') + ': ' + t(AGES[d.age!]));
+        return;
+      }
       if (d.research && !this.engine.state.research.includes(d.research)) {
         this.toast(`${t('requires')}: ${techName(d.research)}`);
         return;
@@ -449,7 +507,7 @@ export class GameUI {
         : this.engine.build(type, p.x, p.y, this.rotation);
       if (this.result(result)) {
         this.chime();
-        if (['road', 'wall'].includes(type)) {
+        if (['road', 'bridge', 'wall'].includes(type)) {
           this.scene.pinned = null;
           this.scene.drawGhost(null);
         } else this.cancelPlacement();
@@ -509,11 +567,13 @@ export class GameUI {
       return;
     }
     if (verb === 'attack') {
-      this.result(this.engine.attack(arg));
+      this.result(
+        this.engine.attack(arg, this.selectedUnits.size ? [...this.selectedUnits] : undefined),
+      );
       return;
     }
     if (verb === 'train') {
-      this.result(this.engine.train(arg as 'guard' | 'archer'));
+      this.result(this.engine.train(arg));
       return;
     }
     if (verb === 'buy' || verb === 'sell') {
@@ -561,6 +621,10 @@ export class GameUI {
       return;
     }
     if (verb === 'export') {
+      if (window.PocketAndroid) {
+        window.PocketAndroid.exportSave(encode(this.engine.state));
+        return;
+      }
       const url = URL.createObjectURL(
           new Blob([encode(this.engine.state)], { type: 'application/json' }),
         ),
@@ -572,6 +636,10 @@ export class GameUI {
       return;
     }
     if (verb === 'import') {
+      if (window.PocketAndroid) {
+        window.PocketAndroid.importSave();
+        return;
+      }
       (document.querySelector('#import-file') as HTMLInputElement)?.click();
       return;
     }
@@ -627,6 +695,9 @@ export class GameUI {
       return;
     }
     const old = el.querySelector('.modal-content')?.scrollTop ?? 0;
+    const values = [
+      ...el.querySelectorAll<HTMLInputElement | HTMLSelectElement>('input[id],select[id]'),
+    ].map((el) => [el.id, el.value]);
     const p = this.panel,
       s = this.engine.state;
     let body = '',
@@ -635,37 +706,41 @@ export class GameUI {
     if (p === 'researchTab') {
       title = t('researchTitle');
       hint = t('researchHint');
-      body = `<div class="era-banner"><span>${icon('researchTab')}${t(AGES[s.age])}</span><div class="era-track"><span class="active">I</span><i></i><span class="${s.age > 0 ? 'active' : ''}">II</span><i></i><span>III</span></div><span>${t('bronzeAge')}</span></div><div class="research-grid">${RESEARCH.map(
+      body = `<div class="era-banner"><span>${icon('researchTab')}${t(AGES[s.age])}</span><strong>${s.age + 1} / ${AGES.length}</strong><span>${t(AGES[10])}</span></div><div class="research-grid">${RESEARCH.map(
         (r) => {
           const done = s.research.includes(r.id),
             active = s.researching?.id === r.id,
             locked = !r.requires.every((v) => s.research.includes(v));
-          return `<article class="research-card ${done ? 'done' : ''}"><div class="research-symbol">${icon(done ? 'check' : r.id === 'farming' ? 'food' : r.id === 'masonry' ? 'stone' : r.id === 'defense' ? 'defense' : r.id === 'trade' ? 'gold' : r.id === 'bronze' ? 'bronze' : 'tools')}</div><div><h3>${techName(r.id)}</h3><p>${t(r.id + 'Desc')}</p>${r.requires.length ? `<small class="muted">${t('requires')}: ${r.requires.map(techName).join(', ')}</small>` : ''}${cost(r.cost)}<button data-action="research:${r.id}" class="${done ? 'quiet' : 'secondary'}" ${done || locked || s.researching ? 'disabled' : ''}>${done ? t('complete') : active ? `${t('inProgress')} · ${Math.ceil(s.researching!.remaining)}s` : locked ? t('locked') : t('unlock') + ` · ${r.time}s`}</button></div></article>`;
+          return `<article class="research-card ${done ? 'done' : ''}"><div class="research-symbol">${icon(done ? 'check' : r.id === 'farming' ? 'food' : r.id === 'masonry' ? 'stone' : r.id === 'defense' ? 'defense' : r.id === 'trade' ? 'gold' : r.id === 'bronze' ? 'bronze' : 'tools')}</div><div><h3>${techName(r.id)}</h3><p>${r.age !== undefined && r.age > 1 ? t(AGES[r.age]) : t(r.id + 'Desc')}</p>${r.population ? `<small>${t('requires')}: ${r.population} ${t('population')} · ${t(r.building!)}</small>` : ''}${r.requires.length ? `<small class="muted">${t('requires')}: ${r.requires.map(techName).join(', ')}</small>` : ''}${cost(r.cost)}<button data-action="research:${r.id}" class="${done ? 'quiet' : 'secondary'}" ${done || locked || s.researching ? 'disabled' : ''}>${done ? t('complete') : active ? `${t('inProgress')} · ${Math.ceil(s.researching!.remaining)}s` : locked ? t('locked') : t('unlock') + ` · ${r.time}s`}</button></div></article>`;
         },
       ).join('')}</div><p class="muted fine-print">${t('futureAges')}</p>`;
     }
     if (p === 'world') {
       title = t('worldTitle');
       hint = t('worldHint');
-      body = `<div class="region-map"><svg viewBox="0 0 700 225" aria-hidden="true"><path d="M0 28Q90 5 145 33T290 25 410 36 525 20 700 22V225H0" fill="#aab68a"/><path d="M0 170Q115 110 180 161T365 120 530 165 700 132V225H0" fill="#98a77c"/><path d="M560-20Q500 50 560 103T535 240" fill="none" stroke="#7eaaa5" stroke-width="33"/><path d="M90 65 335 125 300 35M335 125 150 185M335 125 490 184" fill="none" stroke="#e3d6ae" stroke-width="3" stroke-dasharray="6 7"/><g fill="#54745a"><path d="m65 75 15-37 15 37zm30-10 20-45 20 45zm45 22 16-37 16 37zm225-30 16-37 16 37zm245 119 17-40 17 40zm-24 13 17-35 17 35z"/></g></svg><span class="home-marker">${icon('build')}${t('village')}</span>${s.regions.map((r, i) => `<span class="region-marker marker-${i} ${r.explored ? 'explored' : ''}">${icon(r.enemy ? 'army' : i === 1 ? 'stone' : i === 2 ? 'gold' : 'leaf')}<b>${t(r.id)}</b></span>`).join('')}</div><div class="region-grid">${s.regions.map((r) => `<article class="region-card"><div class="region-title">${icon(r.enemy ? 'army' : r.id === 'traders' ? 'gold' : 'world')}<h3>${t(r.id)}</h3><span class="tag">${r.explored ? t('explored') : '?'}</span></div>${r.enemy ? `<div class="enemy-hp">${icon('defense')} ${Math.ceil(r.enemy)} / ${r.maxEnemy}<progress max="${r.maxEnemy}" value="${r.enemy}"></progress></div>` : `<small class="muted">${t('regionReward')}</small>`}${cost(r.reward)}${!r.explored ? `<button class="secondary" data-action="explore:${r.id}" ${r.progress ? 'disabled' : ''}>${r.progress ? `${t('inProgress')} · ${Math.ceil(r.progress)}s` : `${t('explore')} ${cost({ food: 25 })} · 20s`}</button>` : r.enemy ? button('attack:' + r.id, t('attack'), 'primary', 'army') : `<span class="completed">${icon('check')}${t(r.maxEnemy ? 'defeated' : 'complete')}</span>`}</article>`).join('')}</div>`;
+      body = worldView(this.engine);
     }
     if (p === 'army') {
       title = t('armyTitle');
       hint = t('armyHint');
-      body = `<div class="army-summary">${icon('defense')}<div><strong>${s.soldiers.length} / 12 ${t('units')}</strong><p>${s.raid ? t('raidWarning') : t('safe')}</p></div>${s.research.includes('defense') ? `<span>${t('raidIn', { n: Math.ceil(s.raidTimer) })}</span>` : ''}</div><div class="unit-grid">${(['guard', 'archer'] as const).map((type) => `<article class="unit-card"><div class="unit-emblem">${icon(type === 'guard' ? 'army' : 'defense')}</div><h3>${t(type)}</h3><p>${t('health')}: ${type === 'guard' ? 100 : 65}</p>${cost(type === 'guard' ? { food: 25, wood: 15 } : { food: 20, wood: 25, leather: 3 })}${button('train:' + type, t('train'), 'primary', 'plus')}</article>`).join('')}</div>${!this.engine.has('barracks') ? `<p class="notice">${t('needsBarracks')}</p>` : ''}<div class="unit-roster">${s.soldiers.map((u) => `<span>${icon('army')}${t(u.type)}<progress max="${u.type === 'guard' ? 100 : 65}" value="${u.hp}"></progress></span>`).join('')}</div>${button('tab:world', t('world'), 'secondary', 'world')}`;
+      body = armyView(this.engine, this.selectedUnits, this.formation);
     }
     if (p === 'quests') {
-      title = t('firstSteps');
+      title = t('campaign');
       hint = t('questHint');
-      body = `<div class="missions">${MISSION_IDS.map((id, i) => `<article class="mission ${s.missions.includes(id) ? 'done' : ''}"><span class="mission-number">${s.missions.includes(id) ? icon('check') : String(i + 1).padStart(2, '0')}</span><div><h3>${t(id)}</h3><small>${s.missions.includes(id) ? t('complete') : t('reward')}</small>${cost(MISSION_REWARDS[i])}</div></article>`).join('')}</div>`;
+      body =
+        campaignView(this.engine) +
+        `<div class="missions">${MISSION_IDS.map((id, i) => `<article class="mission ${s.missions.includes(id) ? 'done' : ''}"><span class="mission-number">${s.missions.includes(id) ? icon('check') : String(i + 1).padStart(2, '0')}</span><div><h3>${t(id)}</h3><small>${s.missions.includes(id) ? t('complete') : t('reward')}</small>${cost(MISSION_REWARDS[i])}</div></article>`).join('')}</div>`;
     }
     if (p === 'economy') {
       title = t('economy');
       hint = t('economyHint');
-      body = `<div class="economy-summary"><span>${icon('population')} ${s.workers.length} / ${this.engine.housing}</span><span>${icon('happiness')} ${s.happiness}%</span><span>${icon('community')} ${t('capacity')}: ${this.engine.capacity}</span></div><div class="resource-table">${RESOURCES.map((r) => `<div>${icon(r)}<strong>${t(r)}</strong><b>${Math.floor(s.resources[r])}</b><progress title="${Math.floor(s.resources[r])} / ${this.engine.capacityFor(r)}" value="${s.resources[r]}" max="${this.engine.capacityFor(r)}"></progress>${['food', 'wood', 'stone', 'leather', 'tools'].includes(r) ? `<button class="quiet trade-button" data-action="sell:${r}" title="30 → 8 ${t('gold')}">${t('sell')} 30 → 8 ${icon('gold')}</button><button class="quiet trade-button" data-action="buy:${r}" title="10 ${t('gold')} → 25">${t('buy')} 10 → 25</button>` : '<span></span><span></span>'}</div>`).join('')}</div><h3>${t('workers')}</h3><div class="worker-list">${s.workers.map((w) => `<span>${icon('population')} #${w.id} · ${t(w.task)} <small>${w.assigned ? t(s.buildings.find((b) => b.id === w.assigned)?.type ?? 'idle') : t(w.resource)}</small></span>`).join('')}</div>`;
+      body =
+        servicesView(this.engine) +
+        `<div class="economy-summary"><span>${icon('population')} ${s.workers.length} / ${this.engine.housing}</span><span>${icon('happiness')} ${s.happiness}%</span><span>${icon('community')} ${t('capacity')}: ${this.engine.capacity}</span></div><div class="resource-table">${RESOURCES.map((r) => `<div>${icon(r)}<strong>${t(r)}</strong><b>${Math.floor(s.resources[r])}</b><progress title="${Math.floor(s.resources[r])} / ${this.engine.capacityFor(r)}" value="${s.resources[r]}" max="${this.engine.capacityFor(r)}"></progress>${['food', 'wood', 'stone', 'leather', 'tools'].includes(r) ? `<button class="quiet trade-button" data-action="sell:${r}" title="30 → 8 ${t('gold')}">${t('sell')} 30 → 8 ${icon('gold')}</button><button class="quiet trade-button" data-action="buy:${r}" title="10 ${t('gold')} → 25">${t('buy')} 10 → 25</button>` : '<span></span><span></span>'}</div>`).join('')}</div><h3>${t('workers')}</h3><div class="worker-list">${s.workers.map((w) => `<span>${icon('population')} #${w.id} · ${t(w.task)} <small>${w.assigned ? t(s.buildings.find((b) => b.id === w.assigned)?.type ?? 'idle') : t(w.resource)}</small></span>`).join('')}</div>`;
     }
     if (p === 'settings') {
-      body = `<div class="setting"><label for="language">${t('language')}</label><select id="language">${(['de', 'en', 'es', 'fr'] as Language[]).map((l, i) => `<option value="${l}" ${l === getLanguage() ? 'selected' : ''}>${['Deutsch', 'English', 'Español', 'Français'][i]}</option>`).join('')}</select></div><div class="setting"><span>${t('sound')}</span>${button('sound', t(s.settings.sound ? 'on' : 'off'), s.settings.sound ? 'primary' : 'secondary')}</div><div class="setting"><label for="quality">${t('quality')}</label><select id="quality"><option value="high" ${s.settings.quality === 'high' ? 'selected' : ''}>${t('high')}</option><option value="low" ${s.settings.quality === 'low' ? 'selected' : ''}>${t('low')}</option></select></div><p class="muted">${t('controls')}</p><div class="settings-links">${button('saves', t('saves'), 'secondary', 'save')}${button('credits', t('credits'), 'quiet')}${this.started ? button('menu', t('mainMenu'), 'quiet') : ''}</div>`;
+      body = `<div class="setting"><label for="language">${t('language')}</label><select id="language">${(['de', 'en', 'es', 'fr'] as Language[]).map((l, i) => `<option value="${l}" ${l === getLanguage() ? 'selected' : ''}>${['Deutsch', 'English', 'Español', 'Français'][i]}</option>`).join('')}</select></div><div class="setting"><span>${t('sound')}</span>${button('sound', t(s.settings.sound ? 'on' : 'off'), s.settings.sound ? 'primary' : 'secondary')}</div><div class="setting"><label for="quality">${t('quality')}</label><select id="quality"><option value="high" ${s.settings.quality === 'high' ? 'selected' : ''}>${t('high')}</option><option value="low" ${s.settings.quality === 'low' ? 'selected' : ''}>${t('low')}</option></select></div><p class="muted">${t('controls')}</p><div class="setting"><label for="difficulty">${t('difficulty')}</label><select id="difficulty">${['peaceful', 'normal', 'hard'].map((v) => `<option value="${v}" ${s.settings.difficulty === v ? 'selected' : ''}>${t(v === 'peaceful' ? 'peacefulMode' : v)}</option>`).join('')}</select></div><div class="setting"><span>${t('offlineProgress')}</span>${button('offline', t(s.settings.offline ? 'on' : 'off'), 'secondary')}</div><p class="muted">${t('offlineHint')}</p><div class="settings-links">${button('saves', t('saves'), 'secondary', 'save')}${button('credits', t('credits'), 'quiet')}${this.started ? button('menu', t('mainMenu'), 'quiet') : ''}</div>`;
     }
     if (p === 'saves') {
       body = `<div class="save-slots">${['auto', 'manual']
@@ -683,10 +758,14 @@ export class GameUI {
         )}</div><div class="split">${button('export', t('export'), 'secondary')}${button('import', t('import'), 'secondary')}<input type="file" id="import-file" accept="application/json,.json" hidden/></div>`;
     }
     if (p === 'credits') {
-      body = `<div class="credits-art"><img src="/icon.svg" alt=""/><h2>Pocket Civilization</h2><span>0.1.0</span><p>${t('creditText')}</p></div>`;
+      body = `<div class="credits-art"><img src="/icon.svg" alt=""/><h2>Pocket Civilization</h2><span>0.2.0</span><p>${t('creditText')}</p></div>`;
     }
     el.innerHTML = `<div class="modal-backdrop"><section class="modal modal-${p}" role="dialog" aria-modal="true" aria-labelledby="modal-title"><header class="modal-header"><div><span class="eyebrow">POCKET CIVILIZATION</span><h2 id="modal-title">${title}</h2>${hint ? `<p>${hint}</p>` : ''}</div><button data-action="closePanel" class="icon-button" aria-label="${t('close')}">${icon('close')}</button></header><div class="modal-content">${body}</div></section></div>`;
     el.querySelector('.modal-content')!.scrollTop = old;
+    for (const [id, value] of values) {
+      const input = el.querySelector<HTMLInputElement | HTMLSelectElement>('#' + CSS.escape(id));
+      if (input) input.value = value;
+    }
     if (focusedAction)
       el.querySelector<HTMLElement>(`[data-action="${CSS.escape(focusedAction)}"]`)?.focus({
         preventScroll: true,
@@ -704,6 +783,7 @@ export class GameUI {
       this.confirm(t('load') + '?', () => {
         if (this.started && !this.persist(MANUAL_KEY)) return;
         this.engine.state = state;
+        this.resetInteraction();
         this.engine.changed++;
         setLanguage(state.settings.language);
         this.started = true;
@@ -715,6 +795,105 @@ export class GameUI {
     } catch {
       this.toast(t('corrupt'));
     }
+  }
+  resetInteraction() {
+    this.selectedUnits.clear();
+    this.scene.selectedUnits = this.selectedUnits;
+    this.scene.commanding = false;
+    this.cancelPlacement();
+    this.scene.selected = null;
+    this.selected = null;
+    this.tick = 0;
+  }
+  campaignAction(verb: string, arg: string) {
+    const e = this.engine,
+      s = e.state;
+    if (verb === 'foundCity') {
+      this.result(e.empire.found(arg));
+      return true;
+    }
+    if (verb === 'visit') {
+      if (this.result(e.empire.switch(arg))) {
+        this.resetInteraction();
+        this.scene.center();
+        this.render();
+      }
+      return true;
+    }
+    if (verb === 'createRoute') {
+      const value = (id: string) => (this.el(id) as HTMLInputElement).value;
+      this.result(
+        e.empire.route(
+          value('route-from'),
+          value('route-to'),
+          value('route-resource') as Resource,
+          Number(value('route-amount')),
+          value('route-repeat') === 'yes',
+        ),
+      );
+      return true;
+    }
+    if (verb === 'cancelRoute') {
+      this.result(e.empire.cancelRoute(Number(arg)));
+      return true;
+    }
+    if (verb === 'pauseRoute') {
+      const r = s.routes.find((r) => r.id === Number(arg));
+      if (r) r.paused = !r.paused;
+      this.renderModal();
+      return true;
+    }
+    if (verb === 'selectUnit') {
+      const id = Number(arg);
+      if (this.selectedUnits.has(id)) this.selectedUnits.delete(id);
+      else this.selectedUnits.add(id);
+      this.scene.selectedUnits = this.selectedUnits;
+      this.renderModal();
+      return true;
+    }
+    if (verb === 'selectAll' || verb === 'clearSelection') {
+      this.selectedUnits = new Set(verb === 'selectAll' ? s.soldiers.map((u) => u.id) : []);
+      this.scene.selectedUnits = this.selectedUnits;
+      this.renderModal();
+      return true;
+    }
+    if (verb === 'moveTroops') {
+      if (!this.selectedUnits.size) this.toast(t('needsArmy'));
+      else {
+        this.cancelPlacement();
+        this.panel = null;
+        this.tab = '';
+        this.selected = null;
+        this.scene.commanding = true;
+        this.render();
+        this.el('placement').innerHTML =
+          `<div class="placement-card"><strong>${t('moveHint')}</strong>${button('cancel', t('cancel'), 'secondary')}</div>`;
+      }
+      return true;
+    }
+    if (verb === 'order') {
+      this.result(e.command([...this.selectedUnits], arg as 'hold' | 'defend' | 'retreat'));
+      return true;
+    }
+    if (verb === 'launch') {
+      this.result(e.launch());
+      return true;
+    }
+    if (verb === 'repair') {
+      this.result(e.repair(this.selected!));
+      return true;
+    }
+    if (verb === 'productionPause') {
+      this.result(e.pauseBuilding(this.selected!));
+      return true;
+    }
+    if (verb === 'offline') {
+      s.settings.offline = !s.settings.offline;
+      s.lastActive = Date.now();
+      this.renderModal();
+      return true;
+    }
+    return false;
   }
   audioToggle() {
     if (!this.audio) this.audio = new AudioContext();
