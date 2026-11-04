@@ -30,9 +30,11 @@ async function main() {
       }
     },
     pocketNativeBack: () => {
-      if (ui.panel) ui.action('closePanel');
+      if (ui.confirmAction) ui.action('confirmCancel');
+      else if (ui.panel) ui.action('closePanel');
       else if (scene.commanding || scene.placing || scene.clearing) ui.action('cancel');
       else if (ui.started) ui.action('menu');
+      else window.PocketAndroid?.exitApp();
     },
   });
   scene.app.canvas.setAttribute('aria-label', t('worldCanvas'));

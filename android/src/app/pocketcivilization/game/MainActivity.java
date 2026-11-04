@@ -57,6 +57,7 @@ public final class MainActivity extends Activity {
   private void script(String source){if(web!=null)web.evaluateJavascript(source,null);}
   private void message(String text){Toast.makeText(this,text,Toast.LENGTH_LONG).show();}
   private final class SaveBridge {
+    @JavascriptInterface public void exitApp(){runOnUiThread(new Runnable(){public void run(){moveTaskToBack(true);}});}
     @JavascriptInterface public void exportSave(String json){
       if(json==null||json.length()>5_000_000)return;
       runOnUiThread(new Runnable(){public void run(){pendingExport=json;Intent i=new Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("application/json").putExtra(Intent.EXTRA_TITLE,"pocket-civilization.json");startActivityForResult(i,EXPORT);}});

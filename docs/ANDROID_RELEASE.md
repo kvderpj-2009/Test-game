@@ -31,7 +31,7 @@ Alternativ die APK auf dem Gerät öffnen und für den verwendeten Dateimanager 
 - Lokale Spielstände verwenden denselben geprüften Speichermechanismus wie die Browserfassung.
 - Export und Import öffnen Androids Storage Access Framework. Dateien sind auf 5 MB begrenzt und werden anschließend durch die Spielstandprüfung validiert.
 - Beim Pausieren wird gespeichert. Bei Rückkehr wird optional der begrenzte Abwesenheitsfortschritt nachgeholt.
-- Die Zurücktaste schließt zuerst das offene Menü oder den Platzierungsmodus und führt danach ins Spielhauptmenü.
+- Die Zurücktaste bricht zuerst einen Bestätigungsdialog ab, schließt danach das offene Menü oder den Platzierungsmodus und führt ins Spielhauptmenü. Ein weiterer Druck legt die App in den Hintergrund und zeigt den Android-Startbildschirm.
 - Systemleisten und Displayaussparungen erhalten eigene Abstände; beide Ausrichtungen bleiben erlaubt.
 - WebView-Debugging ist nur für die ausdrücklich als Debug markierte Test-App aktiv.
 
