@@ -2,6 +2,10 @@
 
 Das native Projekt liegt in `android/`. Eine kleine Java-Activity lädt den vollständigen Produktionsbuild aus dem APK über einen lokalen HTTPS-Ursprung. Sie verwendet die Android-System-WebView. Es gibt keine Netzwerkberechtigung, externe Serveradresse, Werbung oder verpflichtenden Konten. Die Anwendung benötigt Android 8 oder neuer sowie eine aktuelle System-WebView mit WebGL; die bislang geprüften Android-Versionen stehen im Entwicklungsbericht.
 
+## Ergebnis des nativen Startversuchs
+
+Die APK ließ sich auf dem Android-35-Testsystem installieren. Der App-Start ist dort **nicht bestanden**: Android-System-WebView 124 blieb zunächst leer und ihr Renderer stürzte anschließend mit `SIGTRAP` ab. Der Emulator hatte keine KVM-Beschleunigung; außerdem meldete er Einschränkungen bei der Grafikunterstützung. Die genaue Ursache ist noch offen. Die APK deshalb nur experimentell verwenden; die getestete Browserfassung liegt im selben Paket. Ein erfolgreicher physischer Gerätetest liegt nicht vor.
+
 ## Bauen
 
 Voraussetzungen: Node.js 22.12+, Java 21 mit Compiler-Modul, Python 3, Android SDK Platform 35 und Build Tools 35.0.0. Die SDK-Pakete wurden aus Googles offiziellem Repository bezogen und gegen die dort veröffentlichten Prüfsummen geprüft. Für die Nutzung des SDK gelten dessen Lizenzbedingungen.
