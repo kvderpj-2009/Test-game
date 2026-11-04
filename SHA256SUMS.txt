@@ -1,0 +1,2 @@
+bedd4340cdc94ee2309c3775b2de20286bc93c3e47c72e567e34991d8c9c3c8d  Pocket-Civilization.zip
+ce8a4ff85f49947476acc32e257824dec00977f875c0cc4e7296062cecda979c  Pocket-Civilization-0.2.0-debug.apk
