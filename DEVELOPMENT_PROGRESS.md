@@ -1,63 +1,53 @@
-# Entwicklungsstand — Pocket Civilization 0.1
+# Entwicklungsstand — Pocket Civilization 0.2.0
 
-## Ausgangslage und Sicherung
+Stand: 4. November 2026. Der spielerische Ausbau ist bis zum Kampagnensieg implementiert. Die auf Wunsch anschließende Grafikverfeinerung ist noch nicht begonnen. Die Android-Datei ist ausdrücklich eine Debug-Testfassung; eine Store-Freigabe liegt nicht vor.
 
-Das Repository `kvderpj-2009/Test-game` enthielt nur eine README, keine Anwendung, Assets, Tests oder Spielstände. Ausgangscommit: `36031de06162a5a0169d3b92db83e4ed467d51c9`. Ein vollständiges Archiv einschließlich Git-Metadaten liegt unter `/workspace/backups/Test-game-before-rebuild.tar.gz`; ein Baseline-Commit wurde vor dem Neuaufbau angelegt. Es wurden keine alten Spielstände gelöscht.
+## Sicherungen und Ausgangspunkt
 
-## Implementiert
+Die erste spielbare Browserfassung 0.1.0 wurde als Ausgangspunkt erhalten. Vor diesem Ausbau wurde `/workspace/backups/Pocket-Civilization-before-campaign.bundle` erstellt und geprüft. Das ursprüngliche Repository-Archiv liegt unter `/workspace/backups/Test-game-before-rebuild.tar.gz`. Der bisherige Downloadzweig `downloads/pocket-civilization-0.1.0` bleibt erhalten. Die Arbeiten erfolgen auf `work`; `main` wird durch die Downloadbereitstellung nicht überschrieben.
 
-- TypeScript, Vite, PixiJS 8; getrennte Simulation, Daten, Welt, Rendering, UI und Speicherlogik.
-- Hauptmenü mit Neustart, Fortsetzen, Spielständen, Einstellungen, vier Sprachen und Credits.
-- 48 × 48 isometrische Welt mit Wäldern, Felsen, Fluss, Küsten und Erkundungsnebel.
-- Kamera mit Maus, Touch und Tastatur; Scroll-/Pinch-Zoom; Auswahl über sichtbare Gebäudegrafik; Tiefensortierung der Bewohner.
-- 29 Gebäudedefinitionen einschließlich Zentrum: Platzierungsprüfung, Bauvorschau, Kosten, echte Bauarbeit, Verschieben, optische Drehung, Upgrades, Abriss mit Teilrückerstattung.
-- Wiederholte Wege/Palisaden, automatische Palisadenverbindungen, begehbare Tore, Hindernisse entfernen.
-- Zehn Ressourcen und echte Arbeits-/Transportzyklen. Ketten: Getreide → Nahrung; Holz + Stein → Werkzeuge; Kupfer + Holz → Bronze. Eingänge werden verbraucht, Ausgänge erst bei Lieferung eingebucht.
-- Arbeiterzuweisung, automatische Grundversorgung freier Bewohner, Baustellenpriorität, BFS zu erreichbaren Ressourcen und Zugängen; Neuplanung blockierter Routen.
-- Wohnraum, Nahrung, Zufriedenheit, Produktivitätsverlust bei schlechter Versorgung, Wachstum und Lagergrenzen.
-- Sieben Forschungen mit Kosten und Voraussetzungen. Bronzezeit verlangt zehn Einwohner und eine erkundete Region.
-- Vier Regionen mit Expansion, Funden, Handel und gegnerischem Lager.
-- Speerträger, Bogenschützen, Kaserne, Türme, Palisaden, Tore und Bodenverteidigung. Einheiten bewegen sich zum Gegner; Reichweite, HP, Schaden, Beute und Rückkehr werden simuliert. Periodische Dorfangriffe nach Freischaltung der Verteidigung.
-- Zehn einmalig belohnte Aufgaben und situationsabhängige Einstiegshinweise.
-- DE/EN/ES/FR über zentrale Übersetzungstabelle.
-- Auto-/manueller Speicherplatz, Export/Import, Prüfsummen, Validierung, Backup, Formatmigration 1 → 2 und sichtbare Speicherfehler.
-- Eigene prozedurale Grafiken, SVG-Icons, Laufanimationen, Tragewaren, Rauch, Vögel, Baufortschritt, Kampfeffekte und optionale synthetisierte Klänge.
-- Produktionsbuild mit generiertem Offline-Service-Worker, Manifest und SVG-Icon.
+## Neu implementiert
 
-## Verifikation
+- Alle elf Epochen von Steinzeit bis Raumfahrt mit insgesamt 65 Gebäudetypen, 23 Ressourcen und 16 Forschungen.
+- Echte spätere Produktionsketten für Eisen, Kohle, Stahl, Stoff, Papier, Medizin, Öl, Energie, Elektronik, Legierungen, Treibstoff, Daten und Kristalle.
+- Forschungsbedingungen aus Vorgängertechnologie, lokalem Bevölkerungsziel, erforderlichem Gebäude und Warenkosten. Neue Wohn-, Lager-, Produktions- und Versorgungsgebäude.
+- Gesundheit, Bildung und Kultur mit tatsächlicher Versorgung durch beschäftigte Arbeiter; Mangel wirkt auf Zufriedenheit. Produktionspause und Reparaturen.
+- Zwölf Regionen; Weltcode für unterschiedliche Wald-/Felsverteilung. Brücken verbinden Flussufer.
+- Bis zu vier Siedlungen mit jeweils eigener Karte, Bevölkerung, Armee, Lager und laufender Hintergrundsimulation.
+- Bis zu zwölf Warenrouten: getrennte Lager, tatsächliche Abfahrt/Lieferung, einmalige oder regelmäßige Transporte, Pause, Warten bei vollem Ziellager und Rückgabe unterwegs befindlicher Fracht beim Auflösen.
+- 13 Truppentypen einschließlich Belagerungseinheiten. Einzel-/Gruppenauswahl, Marsch, Halten, Verteidigen, Rückzug, drei Ziel-Formationen und Heilung bei Ruhe. Maximal 24 Soldaten je Siedlung.
+- Hindernisbeachtende Überfälle, skalierende Schwierigkeit, Türme und zerstörbare Gebäude. Friedlich/Normal/Schwer sind umschaltbar.
+- 22 Aufgaben und Meilensteine. Die Raumexpedition mit Raumhafen, zwei Siedlungen, sechs Regionen und Startressourcen beendet die Kampagne; Weiterspielen bleibt möglich.
+- Format 3 übernimmt echte Version-0.1-Spielstände einschließlich Vorräten, Gebäuden, Arbeitern und Fortschritt. Die erste alte lokale Fassung bleibt unabhängig vom rotierenden Backup erhalten.
+- Optionale Abwesenheitssimulation für maximal zwei Stunden, mit tatsächlichen Waren-/Bau-/Forschungszyklen; Überfälle warten.
+- Alle neuen Bedienoberflächen und Spieltexte in Deutsch, Englisch, Spanisch und Französisch. Formen und Eingaben bleiben bei laufenden UI-Aktualisierungen erhalten.
+- Eigenes natives Android-Projekt ohne zusätzliches App-Framework: vollständige Offline-Assets, lokale WebView, Android-Dateidialog für Import/Export, Pause/Resume, Zurücktaste und Systemleistenabstände.
 
-- TypeScript-Prüfung und Vite-Produktionsbuild.
-- Simulationstests für Platzierung, Ressourcenmangel, Wasser, Erkundung, Hindernisse, Wegfindung, Arbeit, Wachstum, Warenketten, Upgrades, Verschieben, Abriss, Forschung und Kampf.
-- Durchgehender Fortschritt ausschließlich mit regulären Startressourcen: Hütte → Holzfäller → Forschung → Wachstum → Farm/Mühle → Werkzeuge → Jagd/Handel → Kaserne/Turm → PvE-Sieg → Bronzezeit → Speichern/Laden.
-- Speicherstandtests: Manipulation, beschädigte Daten, Backup, Migration, verweigerte Schreibvorgänge.
-- Chromium-Browsertests: reale UI-Platzierung, Arbeiter, Upgrades, Reload mit Fortschritt, Forschungs-/Weltkartenmenüs und alle vier Sprachen.
-- Mobile Emulation 390 × 844: Touch-Platzierung, Pinch-Zoom, Navigation, Sprachen und Überlaufprüfung.
-- Visuell geprüfte Screenshots. Emulation ersetzt keine Messung auf physischer Android-Hardware.
+Die neue Gebäudegrafik nutzt weiterhin eigene prozedurale Formen. Das sind funktionale vorläufige Darstellungen; sie werden nicht als finale Illustrationen oder als Grafiken anderer Spiele ausgegeben.
 
-Browserprüfungen beschleunigen Wartezeiten durch direkte Simulationsschritte. Ein separater Test spielt den Fortschritt mit regulärem Ressourcenbudget durch. Testinstrumentierung gibt es nur im Entwicklungsbuild mit `?qa`.
+## Nachgewiesene Prüfungen
 
-## Grenzen und offene Arbeit
+- `npm test`: **34 Tests bestanden**. Platzierung, Kosten, Arbeit, Warenketten, Wachstum, Forschung, Kampf, Migration, beschädigte Daten, mehrere Siedlungen, Warenrouten, volle Lager, Fracht-Rückgabe, Befehle, Brücken und Abwesenheitsfortschritt.
+- Der vollständige Kampagnentest verwendet ausschließlich reguläre Startvorräte, die normalen Bau-/Forschungsaktionen und echte Produktion. Ergebnis: alle elf Epochen, Raumexpedition, 107 Einwohner, 68 Gebäude und zwei Siedlungen nach rund 3.450 simulierten Sekunden. Dieser Durchlauf verwendet den friedlichen Modus; Kampflogik wird zusätzlich separat und im Bronze-Durchlauf geprüft.
+- `npm run test:e2e`: **vier Browserprüfungen bestanden** auf unverändertem Code. Desktop-Aufbau, Zuweisung, Upgrade, Speichern/Reload, Forschung, Erkundung; neue Siedlungen/Routen/Truppenbefehle/Kampagnensieg; Touch-Platzierung/Pinch-Zoom; neue Menüs bei 390 Pixel Breite in allen vier Sprachen. Der abschließende Lauf ist durch `test-results/.last-run.json` mit `status: passed` und Screenshots belegt.
+- `npm run test:offline`: **Produktionsprüfung bestanden**. Offline-Neustart und lokales Speichern funktionieren; die QA-Schnittstelle fehlt im Produktionsbuild.
+- `npm run build:android`: TypeScript-Prüfung, Produktionsbuild, Offline-Assetliste und APK-Erstellung erfolgreich. APK-Signaturen v2/v3 und ZIP-Ausrichtung geprüft. Paket `app.pocketcivilization.game`, Version 0.2.0, SDK-Ziel 35, Mindest-API 26, keine Internetberechtigung.
+- Simulation mit 10.000 weiteren Zeitschritten: bis 143 Einwohner, 68 Gebäude und zwei Siedlungen; alle Ressourcen endlich und nicht negativ. Auf der gemeinsam genutzten Cloud-CPU durchschnittlich ca. 0,52 ms je Schritt, 95. Perzentil ca. 0,88 ms. Rohdaten: `docs/SIMULATION_BENCHMARK.json`. Dies sind keine Android-Frameratewerte.
+- `git diff --check`: bestanden.
 
-- Zeitalter ab Eisenzeit: Bezeichnungen und erweiterbare Struktur, noch keine vollständigen Inhalte.
-- Vier feste Regionen, keine große Kampagne oder mehrere unabhängige Städte.
-- Einfache PvE-KI und gemeinsamer Angriffsbefehl; keine komplexen Formationen, Belagerungen oder Mehrspielerpartien.
-- Eigene prozedurale Grafik statt finaler Illustrationen und professioneller Sprite-Atlanten.
-- Android-SDK, physische Gerätetests, native Verpackung, Signierung und Veröffentlichung fehlen. Kein APK/AAB erzeugt.
-- Keine unbeobachtete Offline-Simulation; keine behauptete Migration fremder Speicherformate.
-- Fortschritt bis Bronzezeit getestet; mehrstündiges manuelles Balancing steht aus.
+Die Browserprüfungen beschleunigen Bau-/Forschungszeiten und verwenden vorbereitete Zustände, um Bedienwege gezielt zu prüfen. Der gesonderte vollständige Kampagnentest bestätigt die Erreichbarkeit ohne zusätzliche Waren. Beim Testen gefundene Eingangsverluste beim Verschieben/Fliehen wurden behoben. Alte UI-Selektoren wurden an die neue Siedlungsübersicht angepasst; der umfangreiche Test aller mobilen Sprachvarianten erhielt eine passende Zeitgrenze.
 
-## Nächster konkreter Schritt
+## Android-Testgrenze
 
-Längerer manueller Test auf einem Android-Mittelklassegerät; Frametimes und Speicher bei 50–100 Bewohnern messen. Daraus Animationen und UI-Abstände verbessern. Anschließend native Verpackung gemäß `docs/ANDROID_RELEASE.md` und einen Debug-Build auf dem Gerät prüfen. Neue Zeitalter in `src/game/data.ts` ergänzen und den Fortschrittstest erweitern.
+Die offiziellen SDK-/Emulatorpakete wurden gegen ihre veröffentlichten Prüfsummen geprüft. Das Android-35-Testsystem läuft hier ohne `/dev/kvm`. Bei der ersten Initialisierung hat Androids eigener Watchdog den Systemserver beendet; die APK ließ sich zu diesem Zeitpunkt nicht installieren. Das virtuelle System konnte später booten, die Sitzung endete jedoch vor einem App-Test. Eine erneute native Prüfung läuft bei Wiederaufnahme der Arbeiten.
 
-## Abschlussprüfung am 4. November 2026
+Bis ein erfolgreicher App-Start ausdrücklich dokumentiert ist, sind die native Installation, Dateidialoge, Unterbrechung/Wiederaufnahme und Grafikleistung **nicht als am Android-Gerät getestet** anzusehen. Die APK ist gebaut und technisch verifiziert, aber keine vollständig abgenommene Android-Releasefassung.
 
-- Installation aus dem Lockfile (`npm ci`): erfolgreich.
-- TypeScript und Produktionsbuild einschließlich Offline-Assets: erfolgreich.
-- `npm test`: 21 Tests bestanden, darunter vollständiger Fortschritt mit regulären Startressourcen bis zur tatsächlichen Bronzeproduktion.
-- `npm run test:e2e`: zwei Chromium-Tests bestanden (Desktop und Touch). Dachauswahl, Pinch-Zoom, vier Sprachen und Laden nach Reload geprüft.
-- `npm run test:offline`: ein Produktionsbrowser-Test bestanden; Offline-Neustart und lokaler Spielstand funktionieren, QA-Zugriff ist im Produktionsbuild nicht vorhanden.
-- Entwicklungsserver nach erneuter Installation durch Abruf von HTML und Spielmodul geprüft.
-- `install_script` und `start_skill` für die Cloud-Umgebung als Entwurf gespeichert; eine Veröffentlichung der Umgebung wurde nicht ausgeführt.
+## Nächste Arbeit
 
-Im Fortschrittstest gefundene Lieferweg-Blockaden nach Neubauten wurden durch erreichbare Ressourcen-/Zugangssuche und Neuplanung behoben. Beim Offline-Test wurde die Cache-Auswahl für statische Dateien mit `Vary`-Antwortheadern korrigiert. Native Android-Tests sind weiterhin offen.
+1. Die APK auf einem verfügbaren Android-Gerät tatsächlich starten und die nativen Abläufe prüfen; native Ergebnisse gegebenenfalls unten ergänzen.
+2. Die gewünschte feinere, farbigere und klar lesbare eigene Grafik ausarbeiten: Gebäude-Silhouetten, Materialien, Bewohner, Animationen und Effekte. Keine übernommenen Clash-of-Clans-Assets.
+3. Auf physischen Mittelklassegeräten Frametimes, Speicher, Temperatur, lange Sitzungen und kleine Displays prüfen; anschließend manuelles Balancing nach Spielerfahrung.
+4. Eine Store-Veröffentlichung separat vorbereiten, einschließlich eigener Release-Signierung, Entwicklerkonten und Store-Unterlagen. Es wurde nichts in einen Store eingereicht.
+
+Eine Spielhilfe liegt unter `docs/GAME_GUIDE.md`. `docs/ANDROID_RELEASE.md` enthält Bau- und Installationsschritte sowie die Grenzen der Debug-Testfassung.

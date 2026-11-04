@@ -1,4 +1,4 @@
-# Pocket Civilization
+# Pocket Civilization 0.2.0
 
 Ein eigenständiges, lokal spielbares Aufbaustrategiespiel für den Browser. Der Schwerpunkt liegt auf Siedlungswirtschaft, freien Bauplätzen, Arbeitern, Erkundung und einfachen Echtzeitkämpfen. Anregungen von Anno und Age of Empires werden mit eigenen Namen und eigener Grafik umgesetzt.
 
@@ -56,11 +56,11 @@ Gebäude lassen sich optisch spiegeln; ihre quadratischen Grundflächen bleiben 
 
 - Automatischer lokaler Spielstand alle 30 Sekunden sowie beim Verlassen des Spiels.
 - Separater manueller Speicherplatz, JSON-Export und -Import in **Einstellungen → Spielstände**.
-- Prüfsumme und Validierung vor dem Laden, Sicherung des letzten gültigen Spielstands, Migration von Format 1 nach 2.
+- Prüfsumme und Validierung vor dem Laden, Sicherung des letzten gültigen Spielstands, Migration von Format 1/2 nach 3 mit dauerhafter Sicherung des ursprünglichen Version-0.1-Stands.
 - Beschädigte Daten werden nicht gelöscht. Eine gültige Sicherung kann wiederhergestellt werden.
 - Das Repository enthielt keine früheren Spielstände oder ältere Spielimplementation. Unbekannte Fremdformate werden nicht als migrierbar ausgegeben.
 - Der Produktionsbuild speichert seine Dateien nach dem ersten Online-Aufruf für Offline-Nutzung. Service Worker benötigen HTTPS oder eine lokale Entwicklungsadresse. Bei verweigertem Browserspeicher kann der Spielstand exportiert werden.
-- Keine Offline-Zeitbeschleunigung: Die Simulation pausiert bei ausgeblendeter Seite und im Hauptmenü.
+- Optionaler Abwesenheitsfortschritt simuliert bis zu zwei Stunden Produktion, Bau und Forschung; Überfälle warten. Standardmäßig ausgeschaltet.
 
 ## Architektur
 
@@ -68,8 +68,18 @@ Gebäude lassen sich optisch spiegeln; ihre quadratischen Grundflächen bleiben 
 
 Die Spielgrafik ist eigene prozedurale Grafik, keine gekauften Assets oder finalen handgemalten Illustrationen. Es sind keine Assets der Inspirationsspiele enthalten. Texturen werden wiederverwendet, statisches Gelände wird gecacht, die Simulation läuft mit zehn Schritten pro Spielsekunde. Die sparsame Grafikoption begrenzt die Bildrate auf 30.
 
-## Stand und Grenzen
+## Kampagne und Android
 
-Die Browserfassung enthält 29 Gebäudedefinitionen einschließlich des Dorfzentrums, eine 48 × 48 große Karte, sieben Forschungen, zehn Aufgaben und vier erkundbare Regionen. Steinzeit und Übergang zur Bronzezeit sind spielbar. Spätere Zeitalter sind als Daten vorbereitet, besitzen aber noch keine vollständigen Inhalte.
+Die Version enthält 65 Gebäudetypen, 23 Ressourcen, 16 Forschungen, 13 Truppentypen, 22 Aufgaben und Meilensteine sowie zwölf Regionen. Alle elf Epochen sind spielbar. Bis zu vier unabhängige Siedlungen produzieren parallel und tauschen tatsächliche Waren über bis zu zwölf Routen aus. Die Raumexpedition schließt die Kampagne ab; danach bleibt das Reich spielbar.
 
-Mehrstündige Balancierung, handgezeichnete Animationen und echte Android-Gerätetests stehen noch aus. Es gibt noch keinen signierten Android-Build und keine Store-Veröffentlichung. Details: [DEVELOPMENT_PROGRESS.md](DEVELOPMENT_PROGRESS.md), [Android-Vorbereitung](docs/ANDROID_RELEASE.md).
+Eine ausführliche [Spielhilfe](docs/GAME_GUIDE.md) erklärt die späteren Warenketten, Voraussetzungen, Versorgung, Formationen und Warenrouten. Die Android-Testfassung verpackt den vollständigen Browserbuild lokal und benötigt keine Internetberechtigung. Export/Import verwendet den Android-Dateidialog. Bauanleitung und Testgrenzen: [Android](docs/ANDROID_RELEASE.md).
+
+```bash
+npm run build:android # Android SDK 35 + Build Tools 35.0.0 + JDK 21 erforderlich
+```
+
+## Stand und nächste Arbeit
+
+Die Spielsysteme sind bis zum Kampagnensieg implementiert und automatisiert geprüft, einschließlich eines Durchlaufs mit regulären Startvorräten. Die Grafik bleibt die bisherige eigene, prozedurale Darstellung; die gewünschte feinere Gestaltung ist der nächste separate Arbeitsschritt. Es gibt keinen verpflichtenden Mehrspielerbetrieb und keine laufenden Dienste.
+
+Die APK ist eine signierte Debug-Testversion. Eine Store-Fassung, Release-Schlüssel, Store-Einreichungen und Leistungsnachweise auf physischen Android-Geräten sind noch nicht vorhanden. Automatische Simulation und Emulation ersetzen keinen mehrstündigen manuellen Balancetest. Genaue Prüfergebnisse: [DEVELOPMENT_PROGRESS.md](DEVELOPMENT_PROGRESS.md).

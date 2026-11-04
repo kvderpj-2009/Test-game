@@ -1,0 +1,11 @@
+{
+  "population": 143,
+  "buildings": 68,
+  "settlements": 2,
+  "steps": 10000,
+  "meanTickMs": 0.522310063299999,
+  "p95TickMs": 0.8830110000000104,
+  "maxTickMs": 38.80022299999996,
+  "finite": true,
+  "context": "Shared cloud CPU, simulation only; not Android FPS"
+}

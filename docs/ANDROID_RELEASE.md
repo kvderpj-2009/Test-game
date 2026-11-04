@@ -1,32 +1,42 @@
-# Android-Veröffentlichung vorbereiten
+# Android-Testfassung 0.2.0
 
-Der Browserbuild ist derzeit die geprüfte Plattform. Eine spätere native Verpackung kann beispielsweise über Capacitor erfolgen. Dieser Release-Schritt ist noch nicht ausgeführt: Es gibt kein natives Projekt und kein signiertes APK/AAB.
+Das native Projekt liegt in `android/`. Eine kleine Java-Activity lädt den vollständigen Produktionsbuild aus dem APK über einen lokalen HTTPS-Ursprung. Sie verwendet die Android-System-WebView. Es gibt keine Netzwerkberechtigung, externe Serveradresse, Werbung oder verpflichtenden Konten. Die Anwendung benötigt Android 8 oder neuer sowie eine aktuelle System-WebView mit WebGL; die bislang geprüften Android-Versionen stehen im Entwicklungsbericht.
 
-## Vorhanden
+## Bauen
 
-- Touch-Steuerung, responsive Oberfläche, lokale Spielstände und Export/Import.
-- Offline-Assets, Web-App-Manifest und eigenes SVG-Icon.
-- Produktionsdateien unter `dist/` nach `npm run build`.
-- Keine Konten, Werbung, kostenpflichtigen APIs, Tracking-Dienste oder Multiplayer-Abhängigkeit.
+Voraussetzungen: Node.js 22.12+, Java 21 mit Compiler-Modul, Python 3, Android SDK Platform 35 und Build Tools 35.0.0. Die SDK-Pakete wurden aus Googles offiziellem Repository bezogen und gegen die dort veröffentlichten Prüfsummen geprüft. Für die Nutzung des SDK gelten dessen Lizenzbedingungen.
 
-## Erster Android-Build
+```bash
+npm ci
+ANDROID_SDK_ROOT=/pfad/zum/android-sdk npm run build:android
+```
 
-1. Eine stabile Capacitor-Version passend zu Node/Android auswählen; `@capacitor/core`, `@capacitor/cli`, `@capacitor/android` installieren und im Lockfile festhalten.
-2. Finale eindeutige Application-ID festlegen; `Pocket Civilization` als App-Namen und `dist` als `webDir` verwenden. Keine externe `server.url` in der Release-Konfiguration.
-3. Android-Projekt generieren, Webbuild erzeugen und Assets synchronisieren.
-4. Passendes Android-SDK, Build Tools und JDK installieren. Hier ist Java vorhanden, aber kein Android-SDK eingerichtet.
-5. PNG-Icons in Android-Dichten, adaptive Icons und Splashscreen aus eigenem Artwork erzeugen.
-6. Nur nötige Berechtigungen verwenden. Das Spiel benötigt weder Standort noch Kamera, Kontakte oder Mikrofon. Export/Import auf Android separat prüfen; Browserdateidialoge sind kein Nachweis des nativen Ablaufs.
-7. Debug-APK auf einem echten Mittelklassegerät und verschiedenen Displaygrößen testen. Pause/Resume, Audio-Fokus, Prozessabbruch, Speicherlimits, Back-Taste, Safe Areas und Offline-Start prüfen.
-8. Release erst danach signieren. Keystore und Passwörter gehören in sichere Release-Konfiguration, nie ins Repository. Google Play und Huawei benötigen eigene Entwicklerkonten und aktuelle Store-Metadaten.
+Das Skript verwendet `aapt2`, den Java-Compiler, `d8`, `zipalign` und `apksigner`. Zusätzliche Frameworks oder Gradle-Abhängigkeiten sind nicht erforderlich. Ergebnis:
 
-## Abnahme vor Store-Einreichung
+`android/build/Pocket-Civilization-0.2.0-debug.apk`
 
-- Vollständiger Gameplay-Durchlauf und anschließendes Laden.
-- Wirtschaftszahlen vor/nach App-Unterbrechung vergleichen.
-- Netzwerkanfragen und Berechtigungen prüfen.
-- Startzeit, Speicher, Framerate und lange Frames bei größerer Siedlung messen.
-- Vier Sprachen auf kleinen Displays ohne abgeschnittene Bestätigungsbuttons.
-- Altersfreigabe, Datenschutzangaben, Bilder, Beschreibung und Support-Kontakt mit den tatsächlichen Funktionen abgleichen.
+Die Signatur wird nach dem Build verifiziert. Der lokale Debug-Schlüssel liegt außerhalb des Repositorys, standardmäßig in `/workspace/.pocket-signing/`; mit `POCKET_SIGNING_DIR` lässt sich der Ordner ändern. Er nutzt die üblichen Android-Debug-Zugangsdaten und ist ausschließlich für Testfassungen bestimmt. Für Updates derselben Testinstallation muss derselbe Schlüssel erhalten bleiben. Kein privater Schlüssel wird im Downloadpaket oder im Repository mitgeliefert.
 
-Signierung und Veröffentlichung sind durch die bisherigen Tests nicht belegt.
+```bash
+adb install -r android/build/Pocket-Civilization-0.2.0-debug.apk
+adb shell am start -n app.pocketcivilization.game/.MainActivity
+```
+
+Alternativ die APK auf dem Gerät öffnen und für den verwendeten Dateimanager die Installation dieser Testdatei erlauben. Der Paketname ist `app.pocketcivilization.game`. Browserstände zunächst als JSON exportieren und in der App importieren; beide haben getrennte lokale Speicher.
+
+## Implementierter nativer Ablauf
+
+- Gebündelte Dateien werden durch die WebView aus den APK-Assets geladen, auch beim ersten Start ohne Netz.
+- Navigation zu externen Ursprüngen sowie direkter Dateizugriff sind gesperrt.
+- Lokale Spielstände verwenden denselben geprüften Speichermechanismus wie die Browserfassung.
+- Export und Import öffnen Androids Storage Access Framework. Dateien sind auf 5 MB begrenzt und werden anschließend durch die Spielstandprüfung validiert.
+- Beim Pausieren wird gespeichert. Bei Rückkehr wird optional der begrenzte Abwesenheitsfortschritt nachgeholt.
+- Die Zurücktaste schließt zuerst das offene Menü oder den Platzierungsmodus und führt danach ins Spielhauptmenü.
+- Systemleisten und Displayaussparungen erhalten eigene Abstände; beide Ausrichtungen bleiben erlaubt.
+- WebView-Debugging ist nur für die ausdrücklich als Debug markierte Test-App aktiv.
+
+## Vor Store-Veröffentlichung
+
+Die enthaltene APK ist keine Store-Freigabe. Google Play benötigt unter anderem eine regulär signierte Release-/Bundle-Pipeline; Huawei eigene Store-Metadaten. Ein privater Release-Schlüssel und Entwicklerkonten müssen vom Eigentümer kommen. Die spätere Veröffentlichung benötigt dessen ausdrücklichen Auftrag.
+
+Vorher bleiben reale Geräteprüfungen, Langzeittests, aktuelle Store-Vorgaben, Datenschutz-/Altersangaben, Support-Kontakt und finale Screenshots zu erledigen. Die Grafiken werden auf Wunsch erst im nächsten Schritt verfeinert. Mindestanforderung „Android 8“ beschreibt die SDK-Kompatibilität, keinen bereits erbrachten Test auf jeder Android-Version.
