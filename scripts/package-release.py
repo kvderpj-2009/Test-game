@@ -7,6 +7,7 @@ import json
 import shutil
 import subprocess
 import zipfile
+from collect_licenses import copy_notices
 
 repo = Path(__file__).resolve().parent.parent
 parser = argparse.ArgumentParser()
@@ -37,30 +38,7 @@ for source, target in [('GAME_GUIDE.md', 'SPIELHILFE.md'), ('ANDROID_RELEASE.md'
 shutil.copy2(apk, root / apk.name)
 if args.example:
     shutil.copy2(args.example, root / 'Beispielspielstand-Raumfahrt.json')
-licenses = root / 'Drittlizenzen'
-licenses.mkdir()
-fallbacks = json.loads((repo / 'third_party/licenses.json').read_text())
-packages = subprocess.check_output(['npm', 'ls', '--omit=dev', '--parseable', '--all'], cwd=repo, text=True).splitlines()
-for package in sorted(set(packages)):
-    folder = Path(package)
-    if folder == repo:
-        continue
-    meta = json.loads((folder / 'package.json').read_text())
-    prefix = meta['name'].replace('/', '__')
-    shutil.copy2(folder / 'package.json', licenses / (prefix + '.package.json'))
-    notices = [f for f in folder.iterdir() if f.is_file() and f.name.lower().startswith(('license', 'licence', 'copying', 'notice'))]
-    if not notices:
-        fallback = fallbacks.get(meta['name'] + '@' + meta['version'])
-        if not fallback:
-            raise SystemExit('Check missing license file: ' + str(folder))
-        notice = repo / 'third_party' / fallback['file']
-        if hashlib.sha256(notice.read_bytes()).hexdigest() != fallback['sha256']:
-            raise SystemExit('Bundled license checksum mismatch: ' + str(notice))
-        notices = [notice]
-    for notice in notices:
-        shutil.copy2(notice, licenses / (prefix + '-' + notice.name))
-shutil.copy2(repo / 'third_party/licenses.json', licenses / 'Quellen.json')
-(licenses / 'README.txt').write_text('Lizenztexte und Versionsangaben der installierten Laufzeitbibliotheken.\nDie eigenen Spielgrafiken werden im Projekt prozedural gezeichnet.\n', encoding='utf-8')
+copy_notices(repo, root / 'Drittlizenzen')
 (root / 'ZUERST-LESEN.txt').write_text(f'''POCKET CIVILIZATION {version}
 
 WINDOWS / MAC / LINUX

@@ -52,6 +52,7 @@ Alternativ die APK auf dem Gerät öffnen und für den verwendeten Dateimanager 
 - Die Zurücktaste bricht zuerst einen Bestätigungsdialog ab, schließt danach das offene Menü oder den Platzierungsmodus und führt ins Spielhauptmenü. Ein weiterer Druck legt die App in den Hintergrund und zeigt den Android-Startbildschirm.
 - Systemleisten und Displayaussparungen erhalten eigene Abstände; beide Ausrichtungen bleiben erlaubt.
 - WebView-Debugging ist nur für die ausdrücklich als Debug markierte Test-App aktiv.
+- Lizenztexte und Versionsangaben der Laufzeitbibliotheken liegen auch in der APK unter `assets/licenses/`.
 
 ## Vor Store-Veröffentlichung
 

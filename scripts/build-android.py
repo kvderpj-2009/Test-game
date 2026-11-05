@@ -2,6 +2,7 @@
 """Build a debug-signed offline APK using Android SDK 35 and JDK 21 (no Gradle)."""
 import os, pathlib, shutil, subprocess, zipfile, json
 import xml.etree.ElementTree as ET
+from collect_licenses import copy_notices
 root=pathlib.Path(__file__).resolve().parent.parent
 version=json.loads((root/'package.json').read_text())['version']
 apk_name='Pocket-Civilization-'+version+'-debug.apk'
@@ -17,6 +18,7 @@ if out.exists():shutil.rmtree(out)
 (out/'classes').mkdir(parents=True)
 (out/'assets/game').mkdir(parents=True)
 shutil.copytree(root/'dist',out/'assets/game',dirs_exist_ok=True)
+copy_notices(root,out/'assets/licenses')
 def run(*args):subprocess.run([str(a) for a in args],cwd=root,check=True)
 run(bt/'aapt2','compile','--dir',root/'android/res','-o',out/'resources.zip')
 run(bt/'aapt2','link','-o',out/'unsigned.apk','-I',platform,'--manifest',root/'android/AndroidManifest.xml','-A',out/'assets',out/'resources.zip')
