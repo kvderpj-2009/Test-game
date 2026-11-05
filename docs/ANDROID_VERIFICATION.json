@@ -1,0 +1,20 @@
+{
+  "date": "2026-11-05",
+  "androidApi": 34,
+  "webView": "113.0.5672.136",
+  "hardwareAcceleration": "No KVM; CPU emulator with SwiftShader; Vulkan disabled",
+  "apkInstallation": "passed",
+  "nativeRecoveryView": "observed",
+  "activitySurvivedFailedStart": true,
+  "compatibilityButton": "tapped after dismissing a System UI ANR dialog",
+  "savedCanvasPreference": true,
+  "nativeGameplay": "not verified successfully",
+  "systemUiAnrObserved": true,
+  "publishedApkGamePayloadMatchesInstalledBuild": true,
+  "remaining": [
+    "Successful native gameplay startup",
+    "Native save file dialogs and lifecycle",
+    "Physical device performance"
+  ],
+  "evidenceImage": "android-recovery-0.3.0.png"
+}

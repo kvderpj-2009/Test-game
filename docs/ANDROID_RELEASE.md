@@ -8,6 +8,8 @@ Die Browserfassung besteht ihre Prüfungen mit WebGL und Canvas. Für die native
 
 Im bisherigen Android-35-Testsystem stürzte WebView 124 mit `SIGTRAP` ab. Zur Eingrenzung wurde eine eigenständige, minimale Test-App auf Android 34 mit WebView 113.0.5672.136 installiert. Auch deren einfache lokale HTML-Seite löste einen Rendererabbruch aus, ohne Spielskripte, Pixi oder WebGL. Die Cloud-Emulatoren laufen ohne KVM; außerdem traten Android-System-ANRs auf. Dieser Befund belegt einen Fehler außerhalb des eigentlichen Spielcodes, bestimmt aber seine genaue Ursache noch nicht.
 
+Die neue 0.3.0-APK ließ sich anschließend installieren. Bei ihrem fehlgeschlagenen Start erschien tatsächlich die native Wiederherstellungsansicht, und die Activity blieb aktiv. Nach Schließen eines Android-System-UI-ANR-Dialogs wurde der Kompatibilitätsknopf betätigt; die App speicherte `canvasRenderer=true`. Damit sind die Wiederherstellungsansicht und die Auswahl des Modus nativ nachgewiesen, jedoch noch kein erfolgreicher nativer Spielbetrieb. [Aufnahme der Wiederherstellungsansicht](android-recovery-0.3.0.png), [Prüfprotokoll](ANDROID_VERIFICATION.json).
+
 Die APK ist deshalb weiterhin experimentell. Der vollständige, separat geprüfte Browserbuild und sein Starter liegen im selben Downloadpaket.
 
 ## Wiederherstellung

@@ -45,6 +45,8 @@ Unter Android 35 / WebView 124 stürzte die bisherige Spielansicht mit `SIGTRAP`
 
 Dort wurde eine separate, minimale native Test-App installiert. Sie lud ausschließlich eine einfache lokale HTML-Seite, ohne Spielskript, Pixi oder WebGL. Auch ihr WebView-Renderer brach mit Fehlercode 5 ab; die Test-App meldete `Renderer gone, crashed=true`. Der Fehler tritt damit auch unabhängig vom Spiel auf. Die genaue Ursache innerhalb der emulierten WebView ist nicht abschließend bestimmt.
 
+Die 0.3.0-APK wurde anschließend auf Android 34 installiert. Ihre native Wiederherstellungsansicht erschien beim fehlgeschlagenen Start, der Spielprozess blieb aktiv. Nach Schließen eines System-UI-ANR-Dialogs wurde der Kompatibilitätsknopf erfolgreich betätigt und `canvasRenderer=true` in den App-Einstellungen nachgewiesen. Die Aufnahme und die abgegrenzten Ergebnisse liegen unter `docs/android-recovery-0.3.0.png` und `docs/ANDROID_VERIFICATION.json`. Der abschließende Build ergänzt Lizenztexte; seine Spiel-Assets und `classes.dex` wurden bytegenau mit dem installierten Testbuild verglichen.
+
 Die neue Spiel-App enthält deshalb eine native Wiederherstellungsansicht und einen Canvas-Startpfad. Der Canvas-Modus kann fehlende WebGL-Unterstützung überbrücken; einen unabhängig davon abstürzenden System-WebView-Prozess kann er nicht reparieren. Ein erfolgreicher nativer Spielstart und die vollständigen nativen Import-/Export- und Pause-/Resume-Abläufe sind noch nicht freigegeben. [Android-Bauanleitung und Testgrenzen](docs/ANDROID_RELEASE.md).
 
 ## Verbleibende externe Prüfungen
