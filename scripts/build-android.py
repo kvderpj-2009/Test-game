@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 """Build a debug-signed offline APK using Android SDK 35 and JDK 21 (no Gradle)."""
-import os, pathlib, shutil, subprocess, zipfile
+import os, pathlib, shutil, subprocess, zipfile, json
+import xml.etree.ElementTree as ET
 root=pathlib.Path(__file__).resolve().parent.parent
+version=json.loads((root/'package.json').read_text())['version']
+apk_name='Pocket-Civilization-'+version+'-debug.apk'
+manifest_version=ET.parse(root/'android/AndroidManifest.xml').getroot().get('{http://schemas.android.com/apk/res/android}versionName')
+if manifest_version!=version:raise SystemExit('Update AndroidManifest.xml versionName/versionCode to match package.json before building.')
 sdk=pathlib.Path(os.environ.get('ANDROID_SDK_ROOT','/workspace/.android-sdk'))
 bt=sdk/'build-tools/35.0.0'
 platform=sdk/'platforms/android-35/android.jar'
@@ -23,7 +28,7 @@ keydir=pathlib.Path(os.environ.get('POCKET_SIGNING_DIR','/workspace/.pocket-sign
 keydir.mkdir(parents=True,exist_ok=True)
 key=keydir/'debug.keystore'
 if not key.exists():run('keytool','-genkeypair','-keystore',key,'-storepass','android','-keypass','android','-alias','androiddebugkey','-dname','CN=Android Debug,O=Pocket Civilization,C=DE','-keyalg','RSA','-keysize','2048','-validity','10000')
-run(bt/'apksigner','sign','--ks',key,'--ks-key-alias','androiddebugkey','--ks-pass','pass:android','--key-pass','pass:android','--out',out/'Pocket-Civilization-0.2.0-debug.apk',out/'aligned.apk')
-run(bt/'apksigner','verify','--verbose',out/'Pocket-Civilization-0.2.0-debug.apk')
-run(bt/'zipalign','-c','4',out/'Pocket-Civilization-0.2.0-debug.apk')
-print('APK:',out/'Pocket-Civilization-0.2.0-debug.apk')
+run(bt/'apksigner','sign','--ks',key,'--ks-key-alias','androiddebugkey','--ks-pass','pass:android','--key-pass','pass:android','--out',out/apk_name,out/'aligned.apk')
+run(bt/'apksigner','verify','--verbose',out/apk_name)
+run(bt/'zipalign','-c','4',out/apk_name)
+print('APK:',out/apk_name)

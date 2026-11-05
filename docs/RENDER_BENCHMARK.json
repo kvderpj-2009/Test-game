@@ -1,0 +1,66 @@
+{
+  "environment": "Cloud Chromium, software SwiftShader; concurrent CPU-emulated Android. Not a physical device performance result.",
+  "scenes": [
+    {
+      "renderer": "webgl",
+      "workers": 108,
+      "buildings": 68,
+      "age": 11,
+      "launched": true,
+      "meanFrameMs": 496.89831932773114,
+      "p95FrameMs": 849.9000000000015,
+      "errors": []
+    },
+    {
+      "renderer": "canvas",
+      "workers": 108,
+      "buildings": 68,
+      "age": 11,
+      "launched": true,
+      "meanFrameMs": 222.12016806722687,
+      "p95FrameMs": 333.3000000000002,
+      "errors": []
+    }
+  ],
+  "canvasJavaScriptProfile": {
+    "stats": {
+      "tick": {
+        "n": 43,
+        "ms": 47.70000001788139,
+        "max": 6.899999991059303
+      },
+      "live": {
+        "n": 9,
+        "ms": 4.0999999940395355,
+        "max": 1.5
+      },
+      "minimap": {
+        "n": 1,
+        "ms": 3.9000000059604645,
+        "max": 3.9000000059604645
+      },
+      "frame": {
+        "n": 44,
+        "ms": 61.60000003874302,
+        "max": 16.700000002980232
+      },
+      "redraw": {
+        "n": 1,
+        "ms": 1.199999988079071,
+        "max": 1.199999988079071
+      },
+      "animate": {
+        "n": 44,
+        "ms": 26.399999976158142,
+        "max": 3.6000000089406967
+      },
+      "render": {
+        "n": 44,
+        "ms": 287.59999999403954,
+        "max": 13.5
+      }
+    },
+    "visibleObjects": 834,
+    "objects": 1160
+  }
+}

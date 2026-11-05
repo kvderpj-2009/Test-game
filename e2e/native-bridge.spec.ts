@@ -5,7 +5,13 @@ test('Android back callback cancels confirmation, closes menus, saves and return
   await page.addInitScript(() => {
     Object.assign(window, {
       nativeExits: 0,
+      nativeReady: false,
       PocketAndroid: {
+        ready() {
+          (window as any).nativeReady =
+            !!document.querySelector('#world canvas') &&
+            !!document.querySelector('[data-action="new"]');
+        },
         importSave() {},
         exportSave() {},
         exitApp() {
@@ -16,6 +22,7 @@ test('Android back callback cancels confirmation, closes menus, saves and return
   });
   await page.goto('/?qa');
   await page.locator('[data-action="new"]').click();
+  expect(await page.evaluate(() => (window as any).nativeReady)).toBe(true);
   await page.evaluate(() => {
     const { ui } = (window as any).pocket;
     ui.confirm('Test', () => {

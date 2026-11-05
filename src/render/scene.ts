@@ -5,11 +5,22 @@ import { BUILDING, CENTER, MAP_SIZE } from '../game/data';
 import { at, ground, random, visible } from '../game/world';
 import type { Point } from '../game/types';
 import { buildingArt, ellipse, iso, line, polygon, rock, treeArt, uniso } from './art';
+import { CharacterAtlas, type Activity } from './characters';
 export class Scene {
   app = new Application();
   world = new Container();
   objects = new Container();
-  terrainSprite: Sprite | null = null;
+  terrainLayer = new Container();
+  naturalSprites: Sprite[] = [];
+  buildingSprites = new Map<number, Sprite>();
+  campSprites = new Map<string, Sprite>();
+  wallJoins = new Graphics();
+  private terrainKey = '';
+  private atlas = new CharacterAtlas();
+  private units = new Map<
+    number,
+    { sprite: Sprite; x: number; y: number; distance: number; facing: number }
+  >();
   selection = new Graphics();
   effects = new Graphics();
   people = new Graphics();
@@ -29,7 +40,6 @@ export class Scene {
   onCamera: () => void = () => {};
   onFrame: (dt: number) => void = () => {};
   textures = new Map<string, Texture>();
-  unitGraphics = new Map<number, Graphics>();
   revision = -1;
   elapsed = 0;
   pointers = new Map<number, Point>();
@@ -46,14 +56,25 @@ export class Scene {
       antialias: true,
       resolution: Math.min(devicePixelRatio, 2),
       autoDensity: true,
-      preference: 'webgl',
+      preference:
+        new URLSearchParams(location.search).get('renderer') === 'canvas'
+          ? ['canvas']
+          : ['webgl', 'canvas'],
       powerPreference: 'low-power',
     });
     host.appendChild(this.app.canvas);
     this.app.canvas.setAttribute('aria-label', 'Isometric game world');
     this.app.canvas.setAttribute('role', 'application');
     this.app.stage.addChild(this.world);
-    this.world.addChild(this.objects, this.selection, this.ghost, this.people, this.effects);
+    this.world.addChild(
+      this.terrainLayer,
+      this.objects,
+      this.selection,
+      this.ghost,
+      this.people,
+      this.effects,
+    );
+    this.objects.addChild(this.wallJoins);
     this.objects.sortableChildren = true;
     this.center();
     this.bind(host);
@@ -89,6 +110,7 @@ export class Scene {
       this.app.screen.width / 2 + this.camera.x,
       this.app.screen.height * 0.46 + this.camera.y,
     );
+    this.cull();
     this.onCamera();
   }
   zoom(factor: number, screen?: Point) {
@@ -233,19 +255,50 @@ export class Scene {
       if (e.key === 'Home') this.center();
     });
   }
-  redraw() {
-    for (const child of this.objects.removeChildren()) child.destroy();
-    this.unitGraphics.clear();
-    if (this.terrainSprite) {
-      this.terrainSprite.texture.destroy(true);
-      this.terrainSprite.destroy();
-    }
-    const canvas = document.createElement('canvas');
-    canvas.width = 3264;
-    canvas.height = 1760;
-    const c = canvas.getContext('2d')!;
-    c.translate(1632, 65);
+  private inView(x: number, y: number, margin = 180) {
+    const zoom = this.camera.zoom,
+      sx = x * zoom + this.world.x,
+      sy = y * zoom + this.world.y;
+    return (
+      sx > -margin * zoom &&
+      sx < this.app.screen.width + margin * zoom &&
+      sy > -margin * zoom &&
+      sy < this.app.screen.height + margin * zoom
+    );
+  }
+  private cull() {
+    for (const s of [
+      ...this.naturalSprites,
+      ...this.buildingSprites.values(),
+      ...this.campSprites.values(),
+    ])
+      s.visible = this.inView(s.x, s.y);
+    for (const s of this.terrainLayer.children) s.visible = this.inView(s.x + 512, s.y + 512, 740);
+  }
+  private terrain() {
     const state = this.engine.state;
+    const key =
+      state.seed +
+      ':' +
+      state.cleared.join(',') +
+      ':' +
+      state.regions
+        .filter((r) => r.explored)
+        .map((r) => r.id)
+        .join(',');
+    if (this.terrainKey === key) return;
+    this.terrainKey = key;
+    for (const s of this.terrainLayer.removeChildren() as Sprite[]) {
+      s.texture.destroy(true);
+      s.destroy();
+    }
+    for (const s of this.naturalSprites) s.destroy();
+    this.naturalSprites = [];
+    const canvas = document.createElement('canvas');
+    canvas.width = 3200;
+    canvas.height = 1664;
+    const c = canvas.getContext('2d')!;
+    c.translate(1600, 48);
     for (let y = 0; y < MAP_SIZE; y++)
       for (let x = 0; x < MAP_SIZE; x++) {
         const p = iso(x, y),
@@ -254,103 +307,150 @@ export class Scene {
           v = random(x, y, state.seed);
         let color =
           t === 'water'
-            ? ['#83b5b0', '#80b2ad', '#87b7b1'][Math.floor(v * 3)]
+            ? ['#55b9c2', '#58bcc5', '#5abdc7'][Math.floor(v * 3)]
             : t === 'sand'
-              ? '#d2c6a4'
+              ? '#dcc888'
               : t === 'forest'
-                ? ['#93a777', '#99ad7e', '#8fa574'][Math.floor(v * 3)]
-                : ['#a8b885', '#aabb8b', '#b0bd8d', '#a6b782'][Math.floor(v * 4)];
+                ? ['#78b15a', '#7bb45c', '#7db55e'][Math.floor(v * 3)]
+                : ['#89be62', '#8abf63', '#8dc166', '#88bd61'][Math.floor(v * 4)];
         if (!known)
-          color = t === 'water' ? '#77958c' : ['#879882', '#8b9c84', '#889980'][Math.floor(v * 3)];
-        polygon(
-          c,
-          [
-            [p.x, p.y],
-            [p.x + 32, p.y + 16],
-            [p.x, p.y + 32],
-            [p.x - 32, p.y + 16],
-          ],
-          color,
-        );
-        if (t === 'water' && v > 0.8) {
-          line(
-            c,
-            [
-              [p.x - 10, p.y + 13],
-              [p.x + 8, p.y + 13],
-            ],
-            known ? '#c4ded355' : '#b3c8b533',
-            1,
-          );
-        }
-        if (known && t === 'grass' && v > 0.45) {
-          for (let i = 0; i < 3; i++) {
-            const gx = p.x + (random(x + i, y) - 0.5) * 33,
-              gy = p.y + 12 + random(y + i, x) * 12;
+          color = t === 'water' ? '#609b9c' : ['#759d7b', '#779f7d', '#749c7a'][Math.floor(v * 3)];
+        const corners = [
+          [p.x, p.y],
+          [p.x + 32, p.y + 16],
+          [p.x, p.y + 32],
+          [p.x - 32, p.y + 16],
+        ];
+        polygon(c, corners, color, color);
+        if (t === 'water') {
+          if (v > 0.7)
             line(
               c,
               [
-                [gx, gy],
-                [gx - 1, gy - 3],
+                [p.x - 12, p.y + 18],
+                [p.x - 4, p.y + 20],
+                [p.x + 9, p.y + 18],
               ],
-              '#69875645',
+              known ? '#d4f4d886' : '#d4e5cd28',
+              1.5,
+            );
+          const neighbors = [
+            [x, y - 1],
+            [x + 1, y],
+            [x, y + 1],
+            [x - 1, y],
+          ];
+          for (let i = 0; i < 4; i++)
+            if (ground(state, ...(neighbors[i] as [number, number])) !== 'water') {
+              line(c, [corners[i], corners[(i + 1) % 4]], known ? '#bde3a6' : '#8cad8b', 4);
+              line(c, [corners[i], corners[(i + 1) % 4]], known ? '#f6ecc0' : '#a9c29a', 1);
+            }
+        }
+        if (known && t === 'grass' && v > 0.55) {
+          for (let i = 0; i < 3; i++) {
+            const gx = p.x + (random(x + i, y) - 0.5) * 32,
+              gy = p.y + 14 + random(y + i, x) * 10;
+            line(
+              c,
+              [
+                [gx - 2, gy - 2],
+                [gx, gy + 1],
+                [gx + 1, gy - 4],
+              ],
+              '#588a473a',
               1,
             );
           }
-          if (v > 0.96) {
-            ellipse(c, p.x + 4, p.y + 17, 1.7, 1, '#eadbb0');
-            ellipse(c, p.x - 4, p.y + 21, 1.2, 1, '#e7d2a5');
-          }
+          if (v > 0.94)
+            for (let i = 0; i < 3; i++)
+              ellipse(
+                c,
+                p.x - 7 + i * 6,
+                p.y + 18 + (i % 2) * 3,
+                1.6,
+                1.1,
+                i % 2 ? '#fff0a8' : '#e7eccc',
+              );
         }
-        if (t === 'forest' && v > 0.14) {
-          const key = 'tree' + Math.floor(v * 7);
-          if (!this.textures.has(key))
-            this.textures.set(key, Texture.from(treeArt(Math.floor(v * 7))));
+        if (t === 'forest' && v > 0.21) {
+          const variant = Math.floor(v * 7),
+            key = 'tree' + variant;
+          if (!this.textures.has(key)) this.textures.set(key, Texture.from(treeArt(variant)));
           const tree = new Sprite(this.textures.get(key)!);
           tree.anchor.set(0.5, 120 / 140);
           tree.position.set(p.x, p.y + 16);
           tree.zIndex = (x + y + 1) * 10;
-          tree.scale.set(0.72 + v * 0.23);
+          tree.scale.set(0.66 + v * 0.17);
           if (!known) {
-            tree.tint = 0x687a69;
-            tree.alpha = 0.5;
+            tree.tint = 0x779b8c;
+            tree.alpha = 0.48;
           }
           this.objects.addChild(tree);
+          this.naturalSprites.push(tree);
         }
         if (t === 'rock') {
-          const art = document.createElement('canvas');
-          art.width = 80;
-          art.height = 70;
-          const a = art.getContext('2d')!;
-          ellipse(a, 40, 54, 25, 9, '#54684b30');
-          rock(a, 35, 50, 22, '#a4afa3');
-          rock(a, 54, 57, 13, '#b7bca8');
-          const key = 'rock';
-          if (!this.textures.has(key)) this.textures.set(key, Texture.from(art));
-          const r = new Sprite(this.textures.get(key)!);
+          if (!this.textures.has('rock')) {
+            const art = document.createElement('canvas');
+            art.width = 80;
+            art.height = 70;
+            const a = art.getContext('2d')!;
+            ellipse(a, 40, 54, 25, 9, '#355a3a30');
+            rock(a, 35, 50, 22, '#9faeaa');
+            rock(a, 54, 57, 13, '#b3c0ac');
+            this.textures.set('rock', Texture.from(art));
+          }
+          const r = new Sprite(this.textures.get('rock')!);
           r.anchor.set(0.5, 54 / 70);
           r.position.set(p.x, p.y + 16);
           r.zIndex = (x + y + 1) * 10;
           if (!known) r.alpha = 0.3;
           this.objects.addChild(r);
+          this.naturalSprites.push(r);
         }
       }
-    this.terrainSprite = new Sprite(Texture.from(canvas));
-    this.terrainSprite.position.set(-1632, -65);
-    this.world.addChildAt(this.terrainSprite, 0);
+    // Small texture pages also fit devices with a 2048-pixel GPU texture limit.
+    for (let y = 0; y < canvas.height; y += 1024)
+      for (let x = 0; x < canvas.width; x += 1024) {
+        const chunk = document.createElement('canvas');
+        chunk.width = Math.min(1024, canvas.width - x);
+        chunk.height = Math.min(1024, canvas.height - y);
+        chunk
+          .getContext('2d')!
+          .drawImage(canvas, x, y, chunk.width, chunk.height, 0, 0, chunk.width, chunk.height);
+        const sprite = new Sprite(Texture.from(chunk));
+        sprite.position.set(x - 1600, y - 48);
+        this.terrainLayer.addChild(sprite);
+      }
+    canvas.width = canvas.height = 1;
+  }
+  redraw() {
+    this.terrain();
+    const state = this.engine.state,
+      ids = new Set(state.buildings.map((b) => b.id));
+    for (const [id, sprite] of this.buildingSprites)
+      if (!ids.has(id)) {
+        sprite.destroy();
+        this.buildingSprites.delete(id);
+      }
     for (const b of state.buildings) {
       const def = BUILDING[b.type],
         p = iso(b.x + def.size / 2, b.y + def.size / 2);
-      const sprite = new Sprite(this.texture(b.type, b.level));
-      sprite.anchor.set(0.5, 180 / 260);
+      let sprite = this.buildingSprites.get(b.id);
+      if (!sprite) {
+        sprite = new Sprite();
+        sprite.anchor.set(0.5, 180 / 260);
+        this.objects.addChild(sprite);
+        this.buildingSprites.set(b.id, sprite);
+      }
+      sprite.texture = this.texture(b.type, b.level);
       sprite.position.set(p.x, p.y);
-      sprite.zIndex = (b.x + b.y + def.size) * 10 + (b.type === 'road' ? -10000 : 0);
-      sprite.alpha = b.remaining ? 0.55 : 1;
-      if (b.rotation % 2) sprite.scale.x = -1;
-      this.objects.addChild(sprite);
+      sprite.zIndex =
+        (b.x + b.y + def.size) * 10 + (['road', 'bridge'].includes(b.type) ? -10000 : 0);
+      sprite.alpha = b.remaining ? 0.6 : 1;
+      sprite.scale.x = b.rotation % 2 ? -1 : 1;
     }
-    // Joined palisades follow every occupied orthogonal neighbor.
-    const joins = new Graphics();
+    const joins = this.wallJoins;
+    joins.clear();
     for (const b of state.buildings.filter((b) => b.type === 'wall' || b.type === 'gate')) {
       const p = iso(b.x + 0.5, b.y + 0.5);
       for (const [dx, dy] of [
@@ -364,21 +464,32 @@ export class Scene {
             joins
               .moveTo(p.x, p.y - h)
               .lineTo(q.x, q.y - h)
-              .stroke({ color: 0x8c704b, width: 4 });
+              .stroke({ color: 0x967044, width: 4 });
         }
       }
     }
     joins.zIndex = 10000;
-    this.objects.addChild(joins);
-    for (const r of state.regions.filter((r) => r.explored && r.enemy > 0)) {
+    const camps = state.regions.filter((r) => r.explored && r.enemy > 0),
+      campIds = new Set(camps.map((r) => r.id));
+    for (const [id, sprite] of this.campSprites)
+      if (!campIds.has(id)) {
+        sprite.destroy();
+        this.campSprites.delete(id);
+      }
+    for (const r of camps) {
+      let camp = this.campSprites.get(r.id);
+      if (!camp) {
+        camp = new Sprite(this.texture('barracks'));
+        camp.anchor.set(0.5, 180 / 260);
+        camp.tint = 0xe0a189;
+        this.objects.addChild(camp);
+        this.campSprites.set(r.id, camp);
+      }
       const p = iso(r.x, r.y);
-      const camp = new Sprite(this.texture('barracks'));
-      camp.anchor.set(0.5, 180 / 260);
       camp.position.set(p.x, p.y);
-      camp.tint = 0xb98e7e;
       camp.zIndex = (r.x + r.y) * 10;
-      this.objects.addChild(camp);
     }
+    this.cull();
     this.drawSelected();
     if (this.pinned) this.drawGhost(this.pinned);
   }
@@ -419,75 +530,69 @@ export class Scene {
   }
   animate() {
     const time = this.elapsed;
-    const all = [...this.engine.state.workers, ...this.engine.state.soldiers];
-    for (const [id, graphic] of this.unitGraphics)
-      if (!all.some((u) => u.id === id)) {
-        graphic.destroy();
-        this.unitGraphics.delete(id);
+    const all = [...this.engine.state.workers, ...this.engine.state.soldiers],
+      ids = new Set(all.map((u) => u.id));
+    this.people.clear();
+    for (const [id, entry] of this.units)
+      if (!ids.has(id)) {
+        entry.sprite.destroy();
+        this.units.delete(id);
       }
     for (const unit of all) {
-      let g = this.unitGraphics.get(unit.id);
-      if (!g) {
-        g = new Graphics();
-        this.unitGraphics.set(unit.id, g);
-        this.objects.addChild(g);
+      const p = iso(unit.x, unit.y);
+      let entry = this.units.get(unit.id);
+      if (!entry) {
+        const sprite = new Sprite();
+        sprite.anchor.set(0.5, 66 / 80);
+        this.objects.addChild(sprite);
+        entry = { sprite, x: p.x, y: p.y, distance: 0, facing: 1 };
+        this.units.set(unit.id, entry);
       }
-      g.clear();
-      g.zIndex = (unit.x + unit.y) * 10;
-      const p = iso(unit.x, unit.y),
+      const dx = p.x - entry.x,
+        dy = p.y - entry.y,
+        travel = Math.hypot(dx, dy);
+      if (travel > 0.05) {
+        entry.distance += travel;
+        if (Math.abs(dx) > 0.02) entry.facing = dx < 0 ? -1 : 1;
+      }
+      entry.x = p.x;
+      entry.y = p.y;
+      const sprite = entry.sprite;
+      sprite.position.set(p.x, p.y);
+      sprite.zIndex = (unit.x + unit.y) * 10;
+      sprite.visible = this.inView(p.x, p.y, 70);
+      if (!sprite.visible) continue;
+      const soldier = 'type' in unit,
         walking = unit.path.length > 0,
-        wave = walking
-          ? Math.sin(this.engine.state.time * 9 + unit.id) * 3
-          : Math.sin(time * 2 + unit.id) * 0.3;
-      const soldier = 'type' in unit;
-      const facing = unit.path.length && unit.path[0].x - unit.x < 0 ? -1 : 1;
-      g.ellipse(p.x, p.y + 1, 5, 2).fill({ color: 0x304432, alpha: 0.2 });
-      g.moveTo(p.x - 1, p.y - 5)
-        .lineTo(p.x - 2 + wave, p.y + 1)
-        .stroke({ color: 0x695b42, width: 2 });
-      g.moveTo(p.x + 2, p.y - 5)
-        .lineTo(p.x + 2 - wave, p.y + 1)
-        .stroke({ color: 0x695b42, width: 2 });
-      g.roundRect(p.x - 3, p.y - 14, 7, 10, 2).fill(
-        soldier ? 0x6a8884 : unit.id % 3 === 0 ? 0xc6a774 : unit.id % 3 === 1 ? 0x7b9490 : 0xc78f6f,
+        carry = !soldier && Object.keys(unit.cargo).length > 0;
+      const activity: Activity = carry
+        ? 'carry'
+        : walking
+          ? 'walk'
+          : (!soldier && ['build', 'gather'].includes(unit.task)) || (soldier && unit.cooldown > 0)
+            ? 'work'
+            : 'idle';
+      const frame =
+        Math.floor(
+          walking
+            ? entry.distance / 3.5
+            : this.engine.state.time * (activity === 'work' ? 8 : 3) + unit.id,
+        ) % 8;
+      sprite.texture = this.atlas.texture(
+        soldier ? unit.type : 'worker' + (unit.id % 3),
+        activity,
+        frame,
       );
-      g.moveTo(p.x - 3, p.y - 12)
-        .lineTo(p.x - 5 - wave * 0.7, p.y - 7)
-        .stroke({ color: 0xc7ac82, width: 2 });
-      g.moveTo(p.x + 3, p.y - 12)
-        .lineTo(p.x + 5 + wave * 0.7, p.y - 7)
-        .stroke({ color: 0xc7ac82, width: 2 });
-      g.circle(p.x + 0.5, p.y - 17, 3.5).fill(0xe0c095);
-      g.ellipse(p.x, p.y - 19, 4, 1.7).fill(soldier ? 0x9aa79a : 0xb59a64);
+      sprite.scale.x = entry.facing;
       if (soldier && this.selectedUnits.has(unit.id))
-        g.ellipse(p.x, p.y + 1, 9, 4).stroke({ color: 0xe8d47f, width: 2 });
-      if (soldier) {
-        g.moveTo(p.x + 7 * facing, p.y - 2)
-          .lineTo(p.x + 7 * facing, p.y - 24)
-          .stroke({ color: 0x725e3c, width: 1.5 });
-        g.poly([
-          p.x + 7 * facing,
-          p.y - 28,
-          p.x + 5 * facing,
-          p.y - 22,
-          p.x + 9 * facing,
-          p.y - 22,
-        ]).fill(0xc4c9ae);
-      } else if (Object.keys(unit.cargo).length)
-        g.rect(p.x - 5, p.y - 11, 8, 6)
-          .fill(0xa68854)
-          .stroke({ color: 0xe1c591, width: 1 });
-      if ('task' in unit && unit.task === 'build' && !walking) {
-        g.moveTo(p.x + 5, p.y - 12)
-          .lineTo(p.x + 8, p.y - 20 + Math.sin(time * 5) * 4)
-          .stroke({ color: 0x7d6849, width: 2 });
-      }
+        this.people.ellipse(p.x, p.y + 1, 12, 5).stroke({ color: 0xffe6a0, width: 2 });
     }
     const e = this.effects;
     e.clear();
     for (const b of this.engine.state.buildings) {
       const d = BUILDING[b.type],
         p = iso(b.x + d.size / 2, b.y + d.size / 2);
+      if (!this.inView(p.x, p.y)) continue;
       if (b.remaining) {
         e.roundRect(p.x - 20, p.y - 75, 40, 4, 2).fill({ color: 0x314e3e, alpha: 0.4 });
         e.roundRect(
@@ -556,12 +661,12 @@ export class Scene {
         c.fillStyle = !visible(this.engine.state, x, y)
           ? '#465c50'
           : t === 'water'
-            ? '#8cafad'
+            ? '#58bcc5'
             : t === 'forest'
-              ? '#7f986d'
+              ? '#60984e'
               : t === 'rock'
                 ? '#b6b7a1'
-                : '#b9c296';
+                : '#8fbe6c';
         c.fillRect(x * scale, y * scale, scale + 0.3, scale + 0.3);
       }
     for (const b of this.engine.state.buildings) {

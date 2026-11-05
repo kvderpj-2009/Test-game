@@ -46,3 +46,10 @@ Die Raumexpedition verlangt die Raumfahrt-Epoche, einen fertigen Raumhafen, zwei
 Automatisch wird alle 30 Sekunden gespeichert. **Einstellungen → Spielstände** enthält einen zusätzlichen manuellen Platz sowie Export/Import. Version-0.1-Spielstände werden übernommen; beim nächsten Speichern bleibt eine Kopie des alten Formats erhalten. Browserstände sind an dieselbe Adresse und dasselbe Browserprofil gebunden. Für einen Gerätewechsel oder die APK vorher als JSON exportieren und dort importieren.
 
 Optional lässt sich Fortschritt während der Abwesenheit aktivieren. Bei Rückkehr werden höchstens zwei Stunden mit der echten Simulation nachgeholt; Dorfüberfälle warten. Standardmäßig ist diese Option ausgeschaltet. Ein voller Speicher oder verweigerter Browserzugriff wird angezeigt – dann den Stand exportieren.
+
+
+## Grafik und Kompatibilität
+
+Die farbigere Darstellung in Version 0.3.0 übernimmt bestehende Spielstände. Einheiten zeigen ihre Ausrüstung, Arbeiter transportieren sichtbare Kisten und verwenden Werkzeuge. Unter **Einstellungen** kann die sparsame Grafik gewählt werden.
+
+Bei einem Browser ohne WebGL verwendet das Spiel Canvas. Zum gezielten Start in diesem Modus `?renderer=canvas` an die Spieladresse anhängen, zum Beispiel `http://localhost:4173/?renderer=canvas`. In der Android-Testfassung erscheint nach einem Abbruch der Grafikansicht ein eigener Knopf für den Kompatibilitätsmodus. Gespeicherte Spielstände werden dadurch nicht gelöscht.

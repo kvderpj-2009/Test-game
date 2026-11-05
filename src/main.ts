@@ -38,6 +38,7 @@ async function main() {
     },
   });
   scene.app.canvas.setAttribute('aria-label', t('worldCanvas'));
+  window.PocketAndroid?.ready?.();
   if (import.meta.env.PROD && !window.PocketAndroid && 'serviceWorker' in navigator)
     void navigator.serviceWorker
       .register('./sw.js')

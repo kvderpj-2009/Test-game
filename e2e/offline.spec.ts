@@ -29,5 +29,14 @@ test('production build starts offline and preserves local saves without exposing
         JSON.parse(JSON.parse(localStorage.getItem('pocket-civilization.v2')!).data).workers.length,
     ),
   ).toBe(3);
+  // The compatibility renderer is a separate bundle and must also be available offline.
+  await page.goto('/?renderer=canvas');
+  await page.getByRole('button', { name: 'Spiel fortsetzen', exact: true }).click();
+  expect(
+    await page
+      .locator('#world canvas')
+      .evaluate((canvas) => (canvas as HTMLCanvasElement).getContext('2d') !== null),
+  ).toBe(true);
+  await expect(page.locator('#journey')).toBeVisible();
   expect(errors).toEqual([]);
 });

@@ -1,10 +1,24 @@
-# Android-Testfassung 0.2.0
+# Android-Testfassung 0.3.0
 
-Das native Projekt liegt in `android/`. Eine kleine Java-Activity lädt den vollständigen Produktionsbuild aus dem APK über einen lokalen HTTPS-Ursprung. Sie verwendet die Android-System-WebView. Es gibt keine Netzwerkberechtigung, externe Serveradresse, Werbung oder verpflichtenden Konten. Die Anwendung benötigt Android 8 oder neuer sowie eine aktuelle System-WebView mit WebGL; die bislang geprüften Android-Versionen stehen im Entwicklungsbericht.
+Das native Projekt liegt in `android/`. Eine kleine Java-Activity lädt den vollständigen Produktionsbuild aus dem APK über einen lokalen HTTPS-Ursprung. Sie verwendet die Android-System-WebView. Es gibt keine Netzwerkberechtigung, externe Serveradresse, Werbung oder verpflichtenden Konten. Die Anwendung benötigt Android 8 oder neuer sowie eine aktuelle System-WebView; die bislang geprüften Android-Versionen stehen im Entwicklungsbericht.
 
-## Ergebnis des nativen Startversuchs
+## Bisheriger nativer Befund
 
-Die APK ließ sich auf dem Android-35-Testsystem installieren. Der App-Start ist dort **nicht bestanden**: Android-System-WebView 124 blieb zunächst leer und ihr Renderer stürzte anschließend mit `SIGTRAP` ab. Der Emulator hatte keine KVM-Beschleunigung; außerdem meldete er Einschränkungen bei der Grafikunterstützung. Die genaue Ursache ist noch offen. Die APK deshalb nur experimentell verwenden; die getestete Browserfassung liegt im selben Paket. Ein erfolgreicher physischer Gerätetest liegt nicht vor.
+Die Browserfassung besteht ihre Prüfungen mit WebGL und Canvas. Für die native APK liegt noch kein erfolgreicher Spielstart auf einem realen Gerät vor.
+
+Im bisherigen Android-35-Testsystem stürzte WebView 124 mit `SIGTRAP` ab. Zur Eingrenzung wurde eine eigenständige, minimale Test-App auf Android 34 mit WebView 113.0.5672.136 installiert. Auch deren einfache lokale HTML-Seite löste einen Rendererabbruch aus, ohne Spielskripte, Pixi oder WebGL. Die Cloud-Emulatoren laufen ohne KVM; außerdem traten Android-System-ANRs auf. Dieser Befund belegt einen Fehler außerhalb des eigentlichen Spielcodes, bestimmt aber seine genaue Ursache noch nicht.
+
+Die APK ist deshalb weiterhin experimentell. Der vollständige, separat geprüfte Browserbuild und sein Starter liegen im selben Downloadpaket.
+
+## Wiederherstellung
+
+Ein Rendererabbruch wird nun nativ behandelt. Wenn das Spiel nach 45 Sekunden keine erfolgreiche Startbestätigung sendet, erscheint ebenfalls eine Wiederherstellungsansicht. Sie bietet:
+
+- **Im Kompatibilitätsmodus starten:** verwendet Canvas und merkt sich die Wahl für weitere App-Starts.
+- **Normal erneut starten:** versucht die normale Grafik und nimmt die Canvas-Vorauswahl zurück.
+- **Schließen:** legt die App in den Hintergrund; auch die Zurücktaste funktioniert in dieser Ansicht.
+
+Gespeicherte lokale Spielstände werden dabei nicht gelöscht. Bei einem normalen Start beendet die JavaScript-Startbestätigung den Zeitwächter. Canvas ersetzt WebGL, behebt jedoch keinen Absturz der System-WebView selbst. In diesem Fall die System-WebView auf dem Gerät aktualisieren und die Browserfassung als geprüfte Alternative verwenden.
 
 ## Bauen
 
@@ -17,12 +31,12 @@ ANDROID_SDK_ROOT=/pfad/zum/android-sdk npm run build:android
 
 Das Skript verwendet `aapt2`, den Java-Compiler, `d8`, `zipalign` und `apksigner`. Zusätzliche Frameworks oder Gradle-Abhängigkeiten sind nicht erforderlich. Ergebnis:
 
-`android/build/Pocket-Civilization-0.2.0-debug.apk`
+`android/build/Pocket-Civilization-0.3.0-debug.apk`
 
 Die Signatur wird nach dem Build verifiziert. Der lokale Debug-Schlüssel liegt außerhalb des Repositorys, standardmäßig in `/workspace/.pocket-signing/`; mit `POCKET_SIGNING_DIR` lässt sich der Ordner ändern. Er nutzt die üblichen Android-Debug-Zugangsdaten und ist ausschließlich für Testfassungen bestimmt. Für Updates derselben Testinstallation muss derselbe Schlüssel erhalten bleiben. Kein privater Schlüssel wird im Downloadpaket oder im Repository mitgeliefert.
 
 ```bash
-adb install -r android/build/Pocket-Civilization-0.2.0-debug.apk
+adb install -r android/build/Pocket-Civilization-0.3.0-debug.apk
 adb shell am start -n app.pocketcivilization.game/.MainActivity
 ```
 
@@ -43,4 +57,4 @@ Alternativ die APK auf dem Gerät öffnen und für den verwendeten Dateimanager 
 
 Die enthaltene APK ist keine Store-Freigabe. Google Play benötigt unter anderem eine regulär signierte Release-/Bundle-Pipeline; Huawei eigene Store-Metadaten. Ein privater Release-Schlüssel und Entwicklerkonten müssen vom Eigentümer kommen. Die spätere Veröffentlichung benötigt dessen ausdrücklichen Auftrag.
 
-Vorher bleiben reale Geräteprüfungen, Langzeittests, aktuelle Store-Vorgaben, Datenschutz-/Altersangaben, Support-Kontakt und finale Screenshots zu erledigen. Die Grafiken werden auf Wunsch erst im nächsten Schritt verfeinert. Mindestanforderung „Android 8“ beschreibt die SDK-Kompatibilität, keinen bereits erbrachten Test auf jeder Android-Version.
+Vorher bleiben reale Geräteprüfungen, Langzeittests, aktuelle Store-Vorgaben, Datenschutz-/Altersangaben, Support-Kontakt und finale Screenshots zu erledigen. Die eigene Grafikverfeinerung ist in 0.3.0 enthalten. Mindestanforderung „Android 8“ beschreibt die SDK-Kompatibilität, keinen bereits erbrachten Test auf jeder Android-Version.

@@ -1,4 +1,4 @@
-# Pocket Civilization 0.2.0
+# Pocket Civilization 0.3.0
 
 Ein eigenständiges, lokal spielbares Aufbaustrategiespiel für den Browser. Der Schwerpunkt liegt auf Siedlungswirtschaft, freien Bauplätzen, Arbeitern, Erkundung und einfachen Echtzeitkämpfen. Anregungen von Anno und Age of Empires werden mit eigenen Namen und eigener Grafik umgesetzt.
 
@@ -66,7 +66,7 @@ Gebäude lassen sich optisch spiegeln; ihre quadratischen Grundflächen bleiben 
 
 `src/game` enthält die von DOM und Rendering getrennte Simulation: Gebäude-/Forschungsdaten, deterministisches Gelände, Wegfindung, Bevölkerung, Waren, Kampf und Spielstände. `src/render` zeichnet eigene Canvas-Texturen und stellt sie mit PixiJS dar; Kamera, Touch und Tiefensortierung liegen dort. `src/ui` enthält Oberfläche, SVG-Symbole und Übersetzungen für Deutsch, Englisch, Spanisch und Französisch.
 
-Die Spielgrafik ist eigene prozedurale Grafik, keine gekauften Assets oder finalen handgemalten Illustrationen. Es sind keine Assets der Inspirationsspiele enthalten. Texturen werden wiederverwendet, statisches Gelände wird gecacht, die Simulation läuft mit zehn Schritten pro Spielsekunde. Die sparsame Grafikoption begrenzt die Bildrate auf 30.
+Die Spielgrafik entsteht aus eigenen prozeduralen Illustrationen: farbige Gebäude mit Materialdetails, unterschiedliche Produktionsanlagen, schattierte Bäume und animierte Bewohner und Truppen. Es sind keine Assets der Inspirationsspiele enthalten. Texturen und Figurenanimationen werden wiederverwendet; Gelände ist gecacht und in kleine Texturseiten aufgeteilt. Die Simulation läuft mit zehn Schritten pro Spielsekunde. Die sparsame Grafikoption begrenzt die Bildrate auf 30. [Grafik und Kompatibilitätsmodus](docs/GRAPHICS.md) beschreibt die Umsetzung und ihre Prüfungen.
 
 ## Kampagne und Android
 
@@ -80,6 +80,11 @@ npm run build:android # Android SDK 35 + Build Tools 35.0.0 + JDK 21 erforderlic
 
 ## Stand und nächste Arbeit
 
-Die Spielsysteme sind bis zum Kampagnensieg implementiert und automatisiert geprüft, einschließlich eines Durchlaufs mit regulären Startvorräten. Die Grafik bleibt die bisherige eigene, prozedurale Darstellung; die gewünschte feinere Gestaltung ist der nächste separate Arbeitsschritt. Es gibt keinen verpflichtenden Mehrspielerbetrieb und keine laufenden Dienste.
+Die Spielsysteme sind bis zum Kampagnensieg implementiert und automatisiert geprüft, einschließlich eines Durchlaufs mit regulären Startvorräten. Die gewünschte Grafikverfeinerung ist umgesetzt. WebGL und der neue Canvas-Kompatibilitätsmodus sind im Browser geprüft. Es gibt keinen verpflichtenden Mehrspielerbetrieb und keine laufenden Dienste.
 
-Die APK ist eine signierte, experimentelle Debug-Testversion. Im Android-35-Emulatortest stürzte der WebView-Renderer beim Start ab; die native Fassung ist deshalb noch nicht freigegeben. Eine Store-Fassung, Release-Schlüssel, Store-Einreichungen und Leistungsnachweise auf physischen Android-Geräten sind noch nicht vorhanden. Automatische Simulation und Emulation ersetzen keinen mehrstündigen manuellen Balancetest. Genaue Prüfergebnisse: [DEVELOPMENT_PROGRESS.md](DEVELOPMENT_PROGRESS.md).
+Die APK ist eine signierte, experimentelle Debug-Testversion. Im Cloud-Emulator stürzt bereits eine unabhängige HTML-Testseite in der System-WebView ab. Die App enthält jetzt eine Wiederherstellungsansicht und einen Canvas-Startpfad; eine native Gerätefreigabe liegt noch nicht vor. Eine Store-Fassung, Release-Schlüssel, Store-Einreichungen und Leistungsnachweise auf physischen Android-Geräten sind noch nicht vorhanden. Automatische Simulation und Emulation ersetzen keinen mehrstündigen manuellen Balancetest. Genaue Prüfergebnisse: [DEVELOPMENT_PROGRESS.md](DEVELOPMENT_PROGRESS.md).
+
+
+## Downloadpaket selbst erstellen
+
+Nach erfolgreichem `npm run build:android` erzeugt `python3 scripts/package-release.py` unter `exports/` ein ZIP mit fertigem Spiel, lokalem Starter, Debug-APK, Spielhilfe, versioniertem Quellcode und den Lizenztexten der installierten Laufzeitbibliotheken. Neue Quelldateien vorher zu Git hinzufügen. Ein vorhandenes Ausgabeverzeichnis wird nicht überschrieben. `--out /anderer/ordner` wählt ein anderes Ziel; `--example /pfad/spielstand.json` fügt einen optionalen Beispielstand hinzu. Das Skript prüft die ZIP-Datei und alle enthaltenen Dateiprüfsummen.

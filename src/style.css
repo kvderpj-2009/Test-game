@@ -7,14 +7,14 @@
     'Segoe UI',
     sans-serif;
   color: #35483b;
-  background: #b1bd91;
+  background: #84ad83;
   font-synthesis: none;
   --ink: #30463b;
   --muted: #858777;
   --paper: #f6f3e9;
   --line: #dedecf;
-  --green: #35594c;
-  --gold: #bd9b56;
+  --green: #28695b;
+  --gold: #c9a04d;
   --shadow: 0 10px 40px #263c3420;
 }
 * {
@@ -220,7 +220,7 @@ progress::-moz-progress-bar {
   inset: 0;
   touch-action: none;
   overflow: hidden;
-  background: radial-gradient(ellipse at 40% 40%, #c3caa4, #8da38b);
+  background: radial-gradient(ellipse at 40% 40%, #b1d18b, #77a793);
 }
 #world::after {
   content: '';
@@ -228,7 +228,7 @@ progress::-moz-progress-bar {
   inset: 0;
   pointer-events: none;
   box-shadow: inset 0 0 150px #3a594025;
-  background: linear-gradient(180deg, #e7e3ce22, transparent 35%, transparent 80%, #e7e3ce40);
+  background: linear-gradient(180deg, #fff3cf10, transparent 35%, transparent 80%, #e7e3ce20);
 }
 #world canvas {
   display: block;

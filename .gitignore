@@ -7,3 +7,6 @@ playwright-report/
 
 android/build/
 *.keystore
+
+exports/
+__pycache__/

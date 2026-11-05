@@ -10,10 +10,10 @@ const strings: Record<string, Entry> = {
     'Monde isométrique',
   ],
   startupError: [
-    'Die Grafik konnte nicht gestartet werden. Aktiviere die Hardwarebeschleunigung deines Browsers und lade die Seite neu.',
-    'Graphics could not start. Enable hardware acceleration in your browser and reload.',
-    'No se pudieron iniciar los gráficos. Activa la aceleración de hardware del navegador y recarga.',
-    'Impossible de lancer les graphismes. Activez l’accélération matérielle du navigateur et rechargez.',
+    'Die Spielansicht konnte nicht gestartet werden. Lade die Seite neu oder aktualisiere deinen Browser.',
+    'The game view could not start. Reload the page or update your browser.',
+    'No se pudo iniciar la vista del juego. Recarga la página o actualiza el navegador.',
+    'Impossible de lancer le jeu. Rechargez la page ou mettez à jour votre navigateur.',
   ],
   subtitle: [
     'Eine Welt, die mit dir wächst',
