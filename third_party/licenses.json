@@ -1,0 +1,9 @@
+{
+  "@pixi/colord@2.9.6": {
+    "url": "https://raw.githubusercontent.com/omgovich/colord/master/LICENSE.md",
+    "sha256": "7613d4594ee8b6163926af3435dae61c9e3d5a27cd137bd76a543ba40002d8fc",
+    "file": "colord-2.9.6/LICENSE.md",
+    "checked": "2026-11-05",
+    "reason": "The published npm package omits its MIT license file."
+  }
+}
