@@ -30,7 +30,7 @@ test('campaign controls: cities, persistent route forms, selected army commands 
   await expect(page.locator('#topbar .settlement')).toContainText('Siedlung');
   await page.locator('[data-action="visit:capital"]').click();
   await expect(page.locator('#topbar .settlement')).toContainText('Hauptstadt');
-  await page.locator('[data-action="closePanel"]').click();
+  await page.locator('[data-action="closePanel"]:visible').click();
   await page.evaluate(() => {
     const { engine } = (window as any).pocket;
     engine.state.buildings.push({
@@ -126,7 +126,7 @@ test('mobile expansion and troop menus fit at 390px in all four locales', async 
   for (const lang of ['de', 'en', 'es', 'fr']) {
     await page.locator('#topbar [data-action="settings"]').tap();
     await page.locator('#language').selectOption(lang);
-    await page.locator('[data-action="closePanel"]').tap();
+    await page.locator('[data-action="closePanel"]:visible').tap();
     for (const panel of ['world', 'army', 'quests', 'researchTab']) {
       await page.locator(`#dock [data-action="tab:${panel}"]`).tap();
       await expect(page.locator('.modal')).toBeVisible();
@@ -134,7 +134,7 @@ test('mobile expansion and troop menus fit at 390px in all four locales', async 
         .locator('.modal-content')
         .evaluate((el) => el.scrollWidth - el.clientWidth);
       expect(overflow, lang + ' ' + panel).toBeLessThanOrEqual(2);
-      await page.locator('[data-action="closePanel"]').tap();
+      await page.locator('[data-action="closePanel"]:visible').tap();
     }
   }
   await page.screenshot({ path: 'test-results/pocket-mobile-expansion.png' });

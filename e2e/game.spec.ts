@@ -9,7 +9,8 @@ test('desktop: start, place, assign, upgrade, save/reload, research, explore and
   await expect(page.getByRole('button', { name: 'Neue Siedlung', exact: true })).toBeVisible();
   await page.screenshot({ path: 'test-results/pocket-menu.png' });
   await page.getByRole('button', { name: 'Neue Siedlung', exact: true }).click();
-  await expect(page.locator('#journey')).toBeVisible();
+  await expect(page.locator('#journey')).toBeHidden();
+  await page.locator('#dock [data-action="tab:build"]').click();
   await page.locator('[data-action="build:hut"]').click();
   const point = await page.evaluate(() => {
     const { engine, scene } = (window as any).pocket;
@@ -36,8 +37,7 @@ test('desktop: start, place, assign, upgrade, save/reload, research, explore and
   await page.evaluate(() => {
     const { ui, scene } = (window as any).pocket;
     ui.category = 'production';
-    ui.tab = 'build';
-    ui.renderBuild();
+    ui.showPanel('build');
     scene.center();
   });
   await page.locator('[data-action="build:lumber"]').click();
@@ -99,7 +99,7 @@ test('desktop: start, place, assign, upgrade, save/reload, research, explore and
   await page.locator('[data-action="tab:researchTab"]').click();
   await expect(page.getByRole('heading', { name: 'Ideen verändern die Welt' })).toBeVisible();
   await page.screenshot({ path: 'test-results/pocket-research.png' });
-  await page.locator('[data-action="closePanel"]').click();
+  await page.locator('[data-action="closePanel"]:visible').click();
   await page.locator('#dock [data-action="tab:world"]').click();
   await page.locator('[data-action="explore:woods"]').click();
   await page.evaluate(() => {
@@ -108,7 +108,7 @@ test('desktop: start, place, assign, upgrade, save/reload, research, explore and
     ui.renderModal();
   });
   await expect(page.locator('.region-grid .region-card').first()).toContainText('Erkundet');
-  await page.locator('[data-action="closePanel"]').click();
+  await page.locator('[data-action="closePanel"]:visible').click();
   await page.locator('#topbar [data-action="settings"]').click();
   for (const [language, label] of [
     ['en', 'Settings'],
@@ -137,6 +137,28 @@ test('mobile: touch placement, drag, pinch, cancel, menus and no horizontal over
   await page.getByRole('button', { name: 'Neue Siedlung', exact: true }).tap();
   await page.screenshot({ path: 'test-results/pocket-mobile.png' });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.locator('#dock [data-action="tab:build"]').tap();
+  await page.locator('#build-category').selectOption('production');
+  const client = await context.newCDPSession(page);
+  const catalog = page.locator('.building-cards');
+  const bounds = (await catalog.boundingBox())!;
+  const x = Math.round(bounds.x + bounds.width / 2);
+  const startY = Math.round(bounds.y + bounds.height - 30);
+  await client.send('Input.dispatchTouchEvent', {
+    type: 'touchStart',
+    touchPoints: [{ x, y: startY, id: 1 }],
+  });
+  // Sample an actual finger swipe over time; Chromium's synthesized gesture is inert here.
+  for (let distance = 20; distance <= 220; distance += 20) {
+    await client.send('Input.dispatchTouchEvent', {
+      type: 'touchMove',
+      touchPoints: [{ x, y: startY - distance, id: 1 }],
+    });
+    await page.waitForTimeout(35);
+  }
+  await client.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await expect.poll(() => catalog.evaluate((el) => el.scrollTop)).toBeGreaterThan(20);
+  await page.locator('#build-category').selectOption('housing');
   await page.locator('[data-action="build:hut"]').tap();
   const point = await page.evaluate(() => {
     const { engine, scene } = (window as any).pocket;
@@ -156,7 +178,6 @@ test('mobile: touch placement, drag, pinch, cancel, menus and no horizontal over
       (window as any).pocket.engine.state.buildings.some((b: any) => b.type === 'hut'),
     ),
   ).toBe(true);
-  const client = await context.newCDPSession(page);
   const zoom = await page.evaluate(() => (window as any).pocket.scene.camera.zoom);
   await client.send('Input.dispatchTouchEvent', {
     type: 'touchStart',
@@ -177,7 +198,7 @@ test('mobile: touch placement, drag, pinch, cancel, menus and no horizontal over
   await page.locator('#dock [data-action="tab:world"]').tap();
   await expect(page.locator('.modal-world')).toBeVisible();
   await page.screenshot({ path: 'test-results/pocket-mobile-world.png' });
-  await page.locator('[data-action="closePanel"]').tap();
+  await page.locator('[data-action="closePanel"]:visible').tap();
   await page.locator('#topbar [data-action="settings"]').tap();
   await page.locator('#language').selectOption('en');
   await expect(page.locator('#modal-title')).toHaveText('Settings');

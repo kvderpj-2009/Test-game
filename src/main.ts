@@ -1,4 +1,5 @@
 import './style.css';
+import './ui/compact.css';
 import { Engine } from './game/engine';
 import { catchUp, load } from './game/save';
 import { Scene } from './render/scene';
@@ -33,6 +34,7 @@ async function main() {
       if (ui.confirmAction) ui.action('confirmCancel');
       else if (ui.panel) ui.action('closePanel');
       else if (scene.commanding || scene.placing || scene.clearing) ui.action('cancel');
+      else if (ui.selected !== null) ui.action('deselect');
       else if (ui.started) ui.action('menu');
       else window.PocketAndroid?.exitApp();
     },

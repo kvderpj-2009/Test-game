@@ -5,6 +5,7 @@ import argparse
 import hashlib
 import json
 import shutil
+import re
 import subprocess
 import zipfile
 from collect_licenses import copy_notices
@@ -34,7 +35,11 @@ for filename in filter(None, files):
 for filename in ['start.mjs', 'Start-Spiel.bat']:
     shutil.copy2(repo / 'scripts/launcher' / filename, root / filename)
 for source, target in [('GAME_GUIDE.md', 'SPIELHILFE.md'), ('ANDROID_RELEASE.md', 'ANDROID-HINWEISE.md'), ('GRAPHICS.md', 'GRAFIK.md')]:
-    shutil.copy2(repo / 'docs' / source, root / target)
+    document = (repo / 'docs' / source).read_text()
+    # The copied guides live beside Spiel/, while evidence stays in Quellcode/docs/.
+    document = re.sub(r'\]\(([^():#]+)\)', lambda match: '](' + ('Quellcode/docs/' if (repo / 'docs' / match.group(1)).is_file() else '') + match.group(1) + ')', document)
+    (root / target).write_text(document)
+
 shutil.copy2(apk, root / apk.name)
 if args.example:
     shutil.copy2(args.example, root / 'Beispielspielstand-Raumfahrt.json')
@@ -66,7 +71,8 @@ Sein Import ersetzt nach Bestätigung den aktiven Stand; dieser wird zuvor manue
 
 INHALT
 Alle elf Epochen, mehrere Siedlungen, Warenrouten, Versorgung, Truppen und Kampagnensieg.
-Neue eigene Gebäudegrafiken, schattierte Landschaft und animierte Bewohner und Einheiten.
+Schmale Kopfleiste, Symbole rechts, schließbare Fenster und Minikarte unten links.
+Forschungshütte direkt im Forschungsfenster bauen oder finden. Eigene Steinzeitgebäude.
 SPIELHILFE.md erklärt den Fortschritt; GRAFIK.md den Kompatibilitätsmodus.
 Quellcode/ enthält das bearbeitbare Projekt und seine automatisierten Prüfungen.
 Drittlizenzen/ enthält die Lizenzhinweise der tatsächlich verwendeten Bibliotheken.

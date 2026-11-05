@@ -34,6 +34,19 @@ test('Android back callback cancels confirmation, closes menus, saves and return
   await page.locator('#topbar [data-action="settings"]').click();
   await page.evaluate(() => (window as any).pocketNativeBack());
   await expect(page.locator('.modal')).toHaveCount(0);
+  for (const panel of ['build', 'journey']) {
+    await page.locator(`#dock [data-action="tab:${panel}"]`).click();
+    await page.evaluate(() => (window as any).pocketNativeBack());
+    expect(await page.evaluate(() => (window as any).pocket.ui.panel)).toBe(null);
+  }
+  await page.evaluate(() => {
+    const { engine, scene } = (window as any).pocket;
+    scene.onSelect(engine.state.buildings.find((b: any) => b.type === 'hall').id);
+  });
+  await expect(page.locator('#inspector')).toBeVisible();
+  await page.evaluate(() => (window as any).pocketNativeBack());
+  await expect(page.locator('#inspector')).toBeHidden();
+  await expect(page.locator('#dock')).toBeVisible();
   await page.evaluate(() => (window as any).pocketNativeBack());
   await expect(page.locator('[data-action="continue"]')).toBeVisible();
   expect(await page.evaluate(() => (window as any).nativeExits)).toBe(0);

@@ -3,6 +3,45 @@ import type { Language } from '../game/types';
 type Entry = [string, string, string, string];
 // Every player-facing string, including catalog data, is selected here.
 const strings: Record<string, Entry> = {
+  gameMenus: ['Spielmenüs', 'Game menus', 'Menús del juego', 'Menus du jeu'],
+  searchBuildings: [
+    'Gebäude suchen …',
+    'Search buildings …',
+    'Buscar edificios …',
+    'Rechercher un bâtiment …',
+  ],
+  buildingCategory: ['Gebäudeart', 'Building category', 'Categoría', 'Catégorie'],
+  laterAges: ['Spätere Epochen', 'Later ages', 'Edades futuras', 'Époques suivantes'],
+  noBuildings: [
+    'Keine passenden Gebäude.',
+    'No matching buildings.',
+    'No hay edificios coincidentes.',
+    'Aucun bâtiment correspondant.',
+  ],
+  buildResearch: [
+    'Forschungshütte bauen',
+    'Build research hut',
+    'Construir cabaña de investigación',
+    'Construire la hutte de recherche',
+  ],
+  showBuilding: [
+    'Im Dorf zeigen',
+    'Show in village',
+    'Mostrar en la aldea',
+    'Afficher dans le village',
+  ],
+  researchLocation: [
+    'Erzeugt Wissen. Auch unter Bauen → Gemeinschaft zu finden.',
+    'Produces knowledge. Also found under Build → Community.',
+    'Produce conocimiento. También en Construir → Comunidad.',
+    'Produit du savoir. Aussi dans Construire → Communauté.',
+  ],
+  researchWorkers: [
+    'Weise der Hütte Arbeiter zu, damit sie Wissen erzeugt.',
+    'Assign workers to the hut to produce knowledge.',
+    'Asigna trabajadores a la cabaña para producir conocimiento.',
+    'Affectez des ouvriers à la hutte pour produire du savoir.',
+  ],
   worldCanvas: [
     'Isometrische Spielwelt',
     'Isometric game world',

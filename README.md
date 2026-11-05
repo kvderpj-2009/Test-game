@@ -1,4 +1,4 @@
-# Pocket Civilization 0.3.0
+# Pocket Civilization 0.4.0
 
 Ein eigenständiges, lokal spielbares Aufbaustrategiespiel für den Browser. Der Schwerpunkt liegt auf Siedlungswirtschaft, freien Bauplätzen, Arbeitern, Erkundung und einfachen Echtzeitkämpfen. Anregungen von Anno und Age of Empires werden mit eigenen Namen und eigener Grafik umgesetzt.
 
@@ -38,17 +38,21 @@ Lager sind begrenzt. Ein Betrieb ohne Arbeiter liefert keine Produktionswaren. B
 
 ## Bedienung
 
-| Aktion          | Maus / Tastatur               | Touch                         |
-| --------------- | ----------------------------- | ----------------------------- |
-| Kamera          | Ziehen, Pfeiltasten oder WASD | Mit einem Finger ziehen       |
-| Zoom            | Mausrad, + / −                | Pinch-Zoom                    |
-| Gebäude wählen  | Sichtbares Gebäude anklicken  | Gebäude antippen              |
-| Bauplatz        | Gelände anklicken, bestätigen | Gelände antippen, bestätigen  |
-| Drehen          | R oder Drehknopf              | Drehknopf                     |
-| Abbrechen       | Esc                           | Abbrechen-Knopf               |
-| Pause           | Leertaste oder Pausenknopf    | Pausenknopf                   |
-| Baumenü         | B                             | Bauen                         |
-| Dorf zentrieren | Home oder Zielkreuz           | Zielkreuz (größere Ansichten) |
+Die Menüs beginnen geschlossen. Rechts öffnen die Symbole **Bauen**, **Forschung**, **Weltkarte**, **Militär**, **Aufgaben** und **Dein Weg** jeweils ein kleines Fenster. Nochmals auf dasselbe Symbol, auf **×** oder **Esc** drücken schließt es. Die Welt neben dem Fenster bleibt bedienbar. Die schmale Kopfleiste zeigt Vorräte und Bevölkerung; die Minikarte mit Zoomknöpfen liegt unten links, auch auf dem Handy.
+
+Im Baumenü sucht das Suchfeld über alle Gebäudearten der erreichten Epoche. **Spätere Epochen** blendet zukünftige Gebäude ein. Die Forschungshütte steht unter **Gemeinschaft**; im Forschungsfenster gibt es einen direkten Bauknopf und bei vorhandener Hütte **Im Dorf zeigen**. Anschließend Arbeiter zuweisen.
+
+| Aktion          | Maus / Tastatur               | Touch                        |
+| --------------- | ----------------------------- | ---------------------------- |
+| Kamera          | Ziehen, Pfeiltasten oder WASD | Mit einem Finger ziehen      |
+| Zoom            | Mausrad, + / −                | Pinch-Zoom                   |
+| Gebäude wählen  | Sichtbares Gebäude anklicken  | Gebäude antippen             |
+| Bauplatz        | Gelände anklicken, bestätigen | Gelände antippen, bestätigen |
+| Drehen          | R oder Drehknopf              | Drehknopf                    |
+| Abbrechen       | Esc                           | Abbrechen-Knopf              |
+| Pause           | Leertaste oder Pausenknopf    | Pausenknopf                  |
+| Baumenü         | B                             | Bauen                        |
+| Dorf zentrieren | Home oder Zielkreuz           | Zielkreuz an der Minikarte   |
 
 Gebäude lassen sich optisch spiegeln; ihre quadratischen Grundflächen bleiben gleich. Wege und Palisaden können wiederholt gesetzt werden. Palisaden verbinden sich automatisch mit Nachbarn. Tore und Straßen sind begehbar. Das Dorfzentrum kann nicht abgerissen werden.
 
@@ -80,10 +84,9 @@ npm run build:android # Android SDK 35 + Build Tools 35.0.0 + JDK 21 erforderlic
 
 ## Stand und nächste Arbeit
 
-Die Spielsysteme sind bis zum Kampagnensieg implementiert und automatisiert geprüft, einschließlich eines Durchlaufs mit regulären Startvorräten. Die gewünschte Grafikverfeinerung ist umgesetzt. WebGL und der neue Canvas-Kompatibilitätsmodus sind im Browser geprüft. Es gibt keinen verpflichtenden Mehrspielerbetrieb und keine laufenden Dienste.
+Die Spielsysteme sind bis zum Kampagnensieg implementiert und automatisiert geprüft, einschließlich eines Durchlaufs mit regulären Startvorräten. Version 0.4.0 ergänzt eine kompakte Oberfläche und eigene Steinzeitgebäude aus Holz, Lehm, Fellen und Stroh. Bestehende Spielstände erhalten die zur Epoche passende Darstellung automatisch. WebGL und der neue Canvas-Kompatibilitätsmodus sind im Browser geprüft. Es gibt keinen verpflichtenden Mehrspielerbetrieb und keine laufenden Dienste.
 
 Die APK ist eine signierte, experimentelle Debug-Testversion. Im Cloud-Emulator stürzt bereits eine unabhängige HTML-Testseite in der System-WebView ab. Die App enthält jetzt eine Wiederherstellungsansicht und einen Canvas-Startpfad; eine native Gerätefreigabe liegt noch nicht vor. Eine Store-Fassung, Release-Schlüssel, Store-Einreichungen und Leistungsnachweise auf physischen Android-Geräten sind noch nicht vorhanden. Automatische Simulation und Emulation ersetzen keinen mehrstündigen manuellen Balancetest. Genaue Prüfergebnisse: [DEVELOPMENT_PROGRESS.md](DEVELOPMENT_PROGRESS.md).
-
 
 ## Downloadpaket selbst erstellen
 

@@ -41,7 +41,7 @@ for (const renderer of ['webgl', 'canvas']) {
     expect(result.sameSprite).toBe(true);
     expect(result.offscreen).toBe(true);
     expect(Math.max(...result.textureSizes)).toBeLessThanOrEqual(1024);
-    await page.screenshot({ path: `test-results/pocket-${renderer}-0.3.0.png` });
+    await page.screenshot({ path: `test-results/pocket-${renderer}-0.4.0.png` });
     await page.reload();
     await expect(page.getByRole('button', { name: 'Neue Siedlung', exact: true })).toBeVisible();
     expect(errors).toEqual([]);
@@ -75,22 +75,25 @@ test('every building and unit illustration fits its texture page', async ({ page
       if (solid < 10) empty.push(name);
     };
     for (const type of Object.keys(BUILDING))
-      for (const level of [1, 2, 3]) inspect(type + level, buildingArt(type, level));
+      for (const age of [0, 1, 10])
+        for (const level of [1, 2, 3])
+          inspect(`${type}/${age}/${level}`, buildingArt(type, level, age));
     for (let i = 0; i < 7; i++) inspect('tree' + i, treeArt(i));
     const atlas = new CharacterAtlas();
-    for (const type of ['worker0', 'worker1', 'worker2', ...Object.keys(UNITS)]) {
-      for (const activity of ['idle', 'walk', 'carry', 'work'] as const) {
-        const sheet = atlas.texture(type, activity, 0).source.resource as HTMLCanvasElement;
-        // Check each frame separately so lateral clipping cannot hide between frames.
-        for (let frame = 0; frame < 8; frame++) {
-          const c = document.createElement('canvas');
-          c.width = 64;
-          c.height = 80;
-          c.getContext('2d')!.drawImage(sheet, frame * 64, 0, 64, 80, 0, 0, 64, 80);
-          inspect(`${type}/${activity}/${frame}`, c);
+    for (const age of [0, 10])
+      for (const type of ['worker0', 'worker1', 'worker2', ...Object.keys(UNITS)]) {
+        for (const activity of ['idle', 'walk', 'carry', 'work'] as const) {
+          const sheet = atlas.texture(type, activity, 0, age).source.resource as HTMLCanvasElement;
+          // Check each frame separately so lateral clipping cannot hide between frames.
+          for (let frame = 0; frame < 8; frame++) {
+            const c = document.createElement('canvas');
+            c.width = 64;
+            c.height = 80;
+            c.getContext('2d')!.drawImage(sheet, frame * 64, 0, 64, 80, 0, 0, 64, 80);
+            inspect(`${type}/${age}/${activity}/${frame}`, c);
+          }
         }
       }
-    }
     return {
       clipped,
       empty,

@@ -21,7 +21,8 @@ test('production build starts offline and preserves local saves without exposing
   await page.reload();
   await expect(page.getByRole('button', { name: 'Spiel fortsetzen', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Spiel fortsetzen', exact: true }).click();
-  await expect(page.locator('#journey')).toBeVisible();
+  await expect(page.locator('#journey')).toBeHidden();
+  await expect(page.locator('#dock')).toBeVisible();
   await expect(page.locator('#world canvas')).toBeVisible();
   expect(
     await page.evaluate(
@@ -37,6 +38,7 @@ test('production build starts offline and preserves local saves without exposing
       .locator('#world canvas')
       .evaluate((canvas) => (canvas as HTMLCanvasElement).getContext('2d') !== null),
   ).toBe(true);
-  await expect(page.locator('#journey')).toBeVisible();
+  await expect(page.locator('#journey')).toBeHidden();
+  await expect(page.locator('#dock')).toBeVisible();
   expect(errors).toEqual([]);
 });

@@ -1,5 +1,5 @@
 import { Rectangle, Texture } from 'pixi.js';
-import { ellipse, line, polygon } from './art';
+import { ellipse, line, polygon } from './shapes';
 type Ctx = CanvasRenderingContext2D;
 export type Activity = 'idle' | 'walk' | 'carry' | 'work';
 const WIDTH = 64,
@@ -9,8 +9,10 @@ const WIDTH = 64,
 /** Each sheet is uploaded once. Walking advances with distance, not the simulation clock. */
 export class CharacterAtlas {
   private sheets = new Map<string, Texture[]>();
-  texture(kind: string, activity: Activity, frame: number) {
-    const key = kind + ':' + activity;
+  texture(kind: string, activity: Activity, frame: number, age = 10) {
+    const primitive =
+      age === 0 && (kind.startsWith('worker') || kind === 'guard' || kind === 'archer');
+    const key = kind + ':' + activity + ':' + primitive;
     if (!this.sheets.has(key)) {
       const canvas = document.createElement('canvas');
       canvas.width = WIDTH * FRAMES;
@@ -19,7 +21,7 @@ export class CharacterAtlas {
       for (let i = 0; i < FRAMES; i++) {
         c.save();
         c.translate(i * WIDTH + WIDTH / 2, FOOT);
-        draw(c, kind, activity, (i / FRAMES) * Math.PI * 2);
+        draw(c, kind, activity, (i / FRAMES) * Math.PI * 2, primitive);
         c.restore();
       }
       const source = Texture.from(canvas).source;
@@ -34,7 +36,7 @@ export class CharacterAtlas {
     return this.sheets.get(key)![frame % FRAMES];
   }
 }
-function draw(c: Ctx, kind: string, activity: Activity, phase: number) {
+function draw(c: Ctx, kind: string, activity: Activity, phase: number, primitive: boolean) {
   const worker = kind.startsWith('worker'),
     walking = activity === 'walk' || activity === 'carry',
     step = walking ? Math.sin(phase) * 4 : 0;
@@ -212,13 +214,15 @@ function draw(c: Ctx, kind: string, activity: Activity, phase: number) {
   c.translate(0, -bob);
   const skin = worker && kind === 'worker2' ? '#c98f64' : '#f0c897';
   const armor = ['sentinel', 'orbitalGuard'].includes(kind);
-  const tunic = worker
-    ? ['#e0ad55', '#3a9fa6', '#d27d5a'][Number(kind.slice(-1)) % 3]
-    : armor
-      ? '#90c8d0'
-      : kind === 'bronzeGuard'
-        ? '#c39658'
-        : '#498cac';
+  const tunic = primitive
+    ? ['#b18a57', '#927651', '#bd9b6d'][worker ? Number(kind.slice(-1)) % 3 : 0]
+    : worker
+      ? ['#e0ad55', '#3a9fa6', '#d27d5a'][Number(kind.slice(-1)) % 3]
+      : armor
+        ? '#90c8d0'
+        : kind === 'bronzeGuard'
+          ? '#c39658'
+          : '#498cac';
   line(
     c,
     [
@@ -309,17 +313,30 @@ function draw(c: Ctx, kind: string, activity: Activity, phase: number) {
   ellipse(c, 4, -28, 4, 4, skin);
   ellipse(c, 4, -29, 1, 1.2, '#344b43');
   if (worker) {
-    ellipse(c, 0, -34, 9, 3, '#b88646');
-    ellipse(c, -1, -36, 5.5, 4, '#eed08a');
-    line(
-      c,
-      [
-        [-5, -35],
-        [4, -35],
-      ],
-      '#d6a65f',
-      1,
-    );
+    if (primitive) {
+      ellipse(c, -1, -34, 6, 4, '#544736');
+      line(
+        c,
+        [
+          [-5, -33],
+          [-5, -26],
+        ],
+        '#544736',
+        3,
+      );
+    } else {
+      ellipse(c, 0, -34, 9, 3, '#b88646');
+      ellipse(c, -1, -36, 5.5, 4, '#eed08a');
+      line(
+        c,
+        [
+          [-5, -35],
+          [4, -35],
+        ],
+        '#d6a65f',
+        1,
+      );
+    }
     if (activity === 'carry') {
       polygon(
         c,
@@ -379,7 +396,7 @@ function draw(c: Ctx, kind: string, activity: Activity, phase: number) {
       -34,
       6.5,
       4.5,
-      armor ? '#d3e7df' : kind === 'bronzeGuard' ? '#e4b777' : '#a3bcb9',
+      primitive ? '#65503b' : armor ? '#d3e7df' : kind === 'bronzeGuard' ? '#e4b777' : '#a3bcb9',
     );
     line(
       c,
@@ -387,7 +404,7 @@ function draw(c: Ctx, kind: string, activity: Activity, phase: number) {
         [-6, -32],
         [6, -33],
       ],
-      armor ? '#57dcdb' : '#567780',
+      primitive ? '#8a6340' : armor ? '#57dcdb' : '#567780',
       2,
     );
     if (['legionary', 'knight', 'orbitalGuard'].includes(kind))
@@ -473,7 +490,7 @@ function draw(c: Ctx, kind: string, activity: Activity, phase: number) {
           [-15, -9],
           [-17, -18],
         ],
-        '#407e9b',
+        primitive ? '#a07b48' : '#407e9b',
         '#e4c17a',
       );
       line(

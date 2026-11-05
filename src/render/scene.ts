@@ -4,7 +4,17 @@ import type { Engine } from '../game/engine';
 import { BUILDING, CENTER, MAP_SIZE } from '../game/data';
 import { at, ground, random, visible } from '../game/world';
 import type { Point } from '../game/types';
-import { buildingArt, ellipse, iso, line, polygon, rock, treeArt, uniso } from './art';
+import {
+  buildingAppearance,
+  buildingArt,
+  ellipse,
+  iso,
+  line,
+  polygon,
+  rock,
+  treeArt,
+  uniso,
+} from './art';
 import { CharacterAtlas, type Activity } from './characters';
 export class Scene {
   app = new Application();
@@ -93,9 +103,18 @@ export class Scene {
     new ResizeObserver(() => this.transform()).observe(host);
   }
   texture(type: string, level = 1) {
-    const key = type + level;
-    if (!this.textures.has(key)) this.textures.set(key, Texture.from(buildingArt(type, level)));
+    const key = `${type}:${level}:${buildingAppearance(type, this.engine.state.age)}`;
+    if (!this.textures.has(key))
+      this.textures.set(key, Texture.from(buildingArt(type, level, this.engine.state.age)));
     return this.textures.get(key)!;
+  }
+  focus(x: number, y: number) {
+    const p = iso(x, y);
+    // Keep the selected building in the open space beside its inspector.
+    this.camera.x = -p.x * this.camera.zoom - Math.min(175, this.app.screen.width * 0.15);
+    this.camera.y =
+      -p.y * this.camera.zoom + (innerWidth < 600 ? this.app.screen.height * 0.34 : 40);
+    this.transform();
   }
   center() {
     const p = iso(CENTER.x + 1, CENTER.y + 1);
@@ -582,6 +601,7 @@ export class Scene {
         soldier ? unit.type : 'worker' + (unit.id % 3),
         activity,
         frame,
+        this.engine.state.age,
       );
       sprite.scale.x = entry.facing;
       if (soldier && this.selectedUnits.has(unit.id))

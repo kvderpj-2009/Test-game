@@ -1,0 +1,762 @@
+/* Compact game chrome: all windows are opt-in and leave the map interactive. */
+#ui.compact-ui {
+  --bar-height: 44px;
+  --window-right: 74px;
+  --window-width: 342px;
+  --window-height: min(560px, calc(100svh - var(--bar-height) - 36px));
+}
+.compact-ui #world-caption {
+  display: none;
+}
+.compact-ui #topbar {
+  inset: 8px 10px auto;
+  min-height: 0;
+  height: var(--bar-height);
+  padding: 0 8px;
+  gap: 10px;
+  border-radius: 9px;
+  z-index: 10;
+}
+.compact-ui .brand {
+  padding: 0;
+  gap: 0;
+  border: 0;
+}
+.compact-ui .brand img {
+  width: 28px;
+  height: 28px;
+}
+.compact-ui .brand > span {
+  display: none;
+}
+.compact-ui .settlement {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 10px;
+  border: 0;
+  min-width: 0;
+  height: 100%;
+}
+.compact-ui .settlement strong {
+  font-size: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 170px;
+}
+.compact-ui .settlement .eyebrow {
+  display: block;
+  font-size: 8px;
+  letter-spacing: 0.7px;
+}
+.compact-ui .settlement .eyebrow b {
+  display: none;
+}
+.compact-ui .resources {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  flex: 1;
+  margin: 0;
+}
+.compact-ui .resource {
+  min-width: 0;
+  padding: 0 9px;
+  gap: 6px;
+  height: 40px;
+  border: 0;
+}
+.compact-ui .resource .icon {
+  width: 21px;
+  height: 21px;
+}
+.compact-ui .resource strong {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.compact-ui .resource small {
+  display: none;
+}
+.compact-ui .population {
+  position: static;
+  display: flex;
+  min-width: 70px;
+}
+.compact-ui .time-controls {
+  display: flex;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.compact-ui #day-count {
+  font-size: 9px;
+  min-width: 28px;
+  margin: 0 6px;
+}
+.compact-ui .time-controls button {
+  width: 34px;
+  height: 40px;
+  padding: 0;
+}
+.compact-ui .time-controls .speed-button {
+  min-width: 32px;
+  font-size: 12px;
+}
+.compact-ui #dock {
+  inset: calc(var(--bar-height) + 24px) 10px auto auto;
+  width: 50px;
+  transform: none;
+  padding: 0;
+  z-index: 11;
+}
+.compact-ui .dock-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px;
+  width: 50px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px #173d3530;
+}
+.compact-ui .dock-tabs button {
+  display: flex;
+  position: relative;
+  justify-content: center;
+  align-items: center;
+  width: 42px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  border-radius: 8px;
+  flex: none;
+}
+.compact-ui .dock-tabs .icon {
+  width: 21px;
+  height: 21px;
+}
+.compact-ui .dock-tabs .dock-label {
+  display: none;
+  position: absolute;
+  right: 52px;
+  top: 7px;
+  white-space: nowrap;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: #234e42;
+  color: #fff9e6;
+  font-size: 12px;
+  box-shadow: var(--shadow);
+  pointer-events: none;
+}
+.compact-ui .dock-tabs button:focus-visible .dock-label {
+  display: block;
+}
+@media (hover: hover) {
+  .compact-ui .dock-tabs button:hover .dock-label {
+    display: block;
+  }
+}
+.compact-ui #journey,
+.compact-ui #build-panel,
+.compact-ui #inspector,
+.compact-ui .modal {
+  position: fixed;
+  inset: calc(var(--bar-height) + 24px) var(--window-right) auto auto;
+  width: var(--window-width);
+  min-width: 0;
+  max-width: calc(100vw - var(--window-right) - 10px);
+  max-height: var(--window-height);
+  transform: none;
+  margin: 0;
+  border-radius: 12px;
+  border: 1px solid #fff8e4;
+  background: #f6f3e9fa;
+  box-shadow: 0 8px 32px #18382d30;
+  pointer-events: auto;
+  z-index: 8;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.compact-ui #journey,
+.compact-ui #inspector {
+  padding: 16px;
+}
+.compact-ui #journey .window-close {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+}
+.compact-ui #journey > .eyebrow {
+  padding-right: 34px;
+}
+.compact-ui #journey h2 {
+  font-size: 23px;
+  margin: 18px 0 10px;
+}
+.compact-ui #journey .settler-advice {
+  margin: 14px -16px -16px;
+  padding: 14px 16px;
+}
+.compact-ui #journey .quest {
+  display: flex;
+  min-height: 48px;
+}
+.compact-ui #overlay,
+.compact-ui .modal-backdrop {
+  pointer-events: none;
+  background: none;
+  backdrop-filter: none;
+  padding: 0;
+}
+.compact-ui .modal {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.compact-ui .modal-header {
+  flex: none;
+  padding: 9px 10px 9px 15px;
+  align-items: center;
+  gap: 6px;
+}
+.compact-ui .modal-header .eyebrow,
+.compact-ui .modal-header p {
+  display: none;
+}
+.compact-ui .modal-header h2 {
+  margin: 0;
+  font-size: 21px;
+  line-height: 1.2;
+}
+.compact-ui .modal-header > .icon-button {
+  flex: none;
+  border: 0;
+  margin: 0;
+}
+.compact-ui .modal-content {
+  padding: 13px;
+  min-height: 0;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+.compact-ui .icon-button {
+  width: 40px;
+  height: 40px;
+  min-height: 40px;
+}
+.compact-ui .modal-content button {
+  min-height: 40px;
+  white-space: normal;
+}
+.compact-ui .research-grid,
+.compact-ui .region-grid,
+.compact-ui .missions,
+.compact-ui .city-grid,
+.compact-ui .unit-grid,
+.compact-ui .worker-list,
+.compact-ui .route-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+}
+.compact-ui .research-card {
+  padding: 12px;
+  gap: 9px;
+}
+.compact-ui .research-symbol {
+  width: 28px;
+  height: 28px;
+  flex: none;
+}
+.compact-ui .research-hut {
+  display: flex;
+  gap: 8px;
+  padding: 0 0 13px;
+  margin-bottom: 13px;
+  border-bottom: 1px solid var(--line);
+}
+.compact-ui .research-hut img {
+  width: 75px;
+  height: 75px;
+  object-fit: contain;
+}
+.compact-ui .research-hut strong {
+  font-size: 13px;
+}
+.compact-ui .research-hut p {
+  font-size: 11px;
+  line-height: 1.5;
+  margin: 6px 0;
+  color: #6e7967;
+}
+.compact-ui .research-hut button {
+  padding: 8px;
+  font-size: 11px;
+}
+.compact-ui .era-banner {
+  gap: 8px;
+  padding: 10px;
+  margin-bottom: 13px;
+}
+.compact-ui .era-banner > span {
+  font-size: 12px;
+  gap: 5px;
+}
+.compact-ui .era-banner > span:last-child {
+  display: none;
+}
+.compact-ui .route-form label,
+.compact-ui .army-controls label {
+  min-width: 0;
+}
+.compact-ui .route-form select,
+.compact-ui .route-form input,
+.compact-ui .army-controls select {
+  min-width: 0;
+  width: 100%;
+}
+.compact-ui .army-summary,
+.compact-ui .army-controls,
+.compact-ui .economy-summary,
+.compact-ui .settings-links {
+  flex-wrap: wrap;
+  gap: 9px;
+  padding: 10px 0;
+}
+.compact-ui .army-summary > span {
+  margin-left: 0;
+}
+.compact-ui .setting {
+  padding: 10px 0;
+  gap: 10px;
+  font-size: 12px;
+}
+.compact-ui .setting select {
+  max-width: 170px;
+  min-width: 0;
+}
+.compact-ui .cost {
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.compact-ui .region-card .cost small,
+.compact-ui .unit-card .cost small {
+  font-size: 9px;
+}
+.compact-ui .needs-grid {
+  grid-template-columns: 1fr 1fr;
+}
+.compact-ui .resource-table > div {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto;
+  gap: 8px;
+  padding: 9px 0;
+}
+.compact-ui .resource-table progress {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+.compact-ui .resource-table .trade-button {
+  grid-column: auto / span 1;
+  font-size: 10px;
+  padding: 4px;
+}
+.compact-ui .save-slot {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.compact-ui .campaign-goal {
+  padding: 12px;
+}
+.compact-ui .campaign-eras {
+  gap: 5px;
+}
+.compact-ui #build-panel {
+  display: flex;
+  flex-direction: column;
+  padding: 0 12px 12px;
+  overflow: hidden;
+}
+.compact-ui .build-heading {
+  flex: none;
+  padding: 6px 0;
+  margin: 0;
+  min-height: 52px;
+}
+.compact-ui .build-heading h2 {
+  font-size: 22px;
+}
+.compact-ui .build-heading > div {
+  display: flex;
+}
+.compact-ui #build-search {
+  flex: none;
+  width: 100%;
+  min-height: 40px;
+  border-radius: 6px;
+  padding: 8px 10px;
+  border: 1px solid #cad2bd;
+  background: #fffdf5;
+  color: var(--ink);
+  font-size: 13px;
+}
+.compact-ui input:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 1px;
+}
+.compact-ui .catalog-filters {
+  display: flex;
+  flex: none;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 0;
+}
+.compact-ui .catalog-filters select {
+  min-width: 0;
+  flex: 1;
+  height: 38px;
+  padding: 5px;
+  border: 1px solid var(--line);
+  background: #eceede;
+  border-radius: 5px;
+  font-size: 11px;
+  color: var(--ink);
+}
+.compact-ui .catalog-filters label {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  max-width: 48%;
+  min-height: 40px;
+  font-size: 10px;
+  cursor: pointer;
+}
+.compact-ui .catalog-filters input {
+  accent-color: var(--green);
+}
+.compact-ui .building-cards {
+  touch-action: pan-y;
+  overscroll-behavior-y: contain;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  padding: 0 2px 0 0;
+  gap: 6px;
+  min-height: 0;
+  scrollbar-width: thin;
+}
+.compact-ui .building-card {
+  max-width: none;
+  display: flex;
+  align-items: center;
+  flex: none;
+  width: 100%;
+  min-width: 0;
+  min-height: 85px;
+  padding: 5px 8px;
+  gap: 8px;
+  border-radius: 7px;
+  text-align: left;
+}
+.compact-ui .card-art {
+  flex: none;
+  width: 85px;
+  height: 72px;
+  margin: 0;
+  overflow: hidden;
+}
+.compact-ui .card-art img {
+  position: absolute;
+  width: 115px;
+  height: 104px;
+  top: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.compact-ui .card-details {
+  min-width: 0;
+  flex: 1;
+}
+.compact-ui .building-card strong {
+  white-space: normal;
+  display: block;
+  font-size: 12px;
+}
+.compact-ui .building-card .cost {
+  margin: 7px 0 4px;
+  font-size: 10px;
+}
+.compact-ui .card-time {
+  display: inline-flex;
+  position: static;
+  align-items: center;
+  gap: 3px;
+  font-size: 9px;
+}
+.compact-ui .card-time .icon {
+  width: 11px;
+  height: 11px;
+}
+.compact-ui .inspect-art {
+  float: right;
+  width: 100px;
+  height: 86px;
+  margin: 0;
+}
+.compact-ui .inspect-art img {
+  width: 140px;
+  height: 126px;
+  top: -18px;
+}
+.compact-ui #inspector > h2 {
+  font-size: 23px;
+  margin: 8px 0;
+}
+.compact-ui #inspector > .muted {
+  max-width: calc(100% - 100px);
+  font-size: 11px;
+}
+.compact-ui .inspector-top > .icon-button {
+  width: 40px;
+  height: 40px;
+}
+.compact-ui .building-stats {
+  clear: both;
+  margin-top: 12px;
+}
+.compact-ui .building-stats > div {
+  padding: 5px 0;
+}
+.compact-ui .worker-control {
+  padding: 8px 0;
+  margin: 8px 0;
+}
+.compact-ui .inspector-actions {
+  margin-top: 10px;
+}
+.compact-ui #map-panel {
+  display: block;
+  inset: auto auto 10px 10px;
+  width: 128px;
+  padding: 6px;
+  border-radius: 9px;
+  z-index: 5;
+}
+.compact-ui .map-head {
+  margin-bottom: 4px;
+  font-size: 8px;
+}
+.compact-ui #minimap {
+  display: block;
+  width: 114px;
+  height: 90px;
+}
+.compact-ui .minimap-button {
+  height: auto;
+  display: block;
+  width: 100%;
+  padding: 0;
+}
+.compact-ui .map-tools {
+  gap: 1px;
+  margin-top: 4px;
+}
+.compact-ui .map-tools .icon-button {
+  flex: 1;
+  width: 36px;
+  height: 32px;
+  min-height: 32px;
+}
+.compact-ui #placement {
+  inset: calc(var(--bar-height) + 24px) auto auto 10px;
+  transform: none;
+  width: min(350px, calc(100vw - 84px));
+  max-width: none;
+  z-index: 7;
+}
+.compact-ui .placement-card {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  padding: 10px;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.compact-ui .placement-card > img {
+  width: 58px;
+  height: 54px;
+}
+.compact-ui .placement-card > div:not(.placement-actions) {
+  flex: 1;
+  min-width: 0;
+}
+.compact-ui .placement-card strong {
+  font-size: 13px;
+}
+.compact-ui .placement-card small {
+  font-size: 10px;
+}
+.compact-ui .placement-actions {
+  width: 100%;
+  margin: 0;
+}
+.compact-ui .placement-actions > .primary {
+  flex: 1;
+  min-height: 40px;
+}
+.compact-ui #toast {
+  bottom: 20px;
+  max-width: min(460px, calc(100vw - 170px));
+  left: 50%;
+  transform: translate(-50%, 10px);
+  font-size: 11px;
+}
+.compact-ui #toast.visible {
+  transform: translate(-50%, 0);
+}
+@media (max-width: 760px) {
+  #ui.compact-ui {
+    --bar-height: 66px;
+    --window-right: 66px;
+    --window-width: 320px;
+    --window-height: min(510px, calc(100svh - var(--bar-height) - 32px));
+  }
+  .compact-ui #topbar {
+    inset: 6px 6px auto;
+    height: var(--bar-height);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: 32px 30px;
+    gap: 0 5px;
+    padding: 2px 6px;
+  }
+  .compact-ui .brand {
+    display: none;
+  }
+  .compact-ui .settlement {
+    grid-area: 1 / 1;
+    padding: 0 3px;
+    gap: 8px;
+    overflow: hidden;
+  }
+  .compact-ui .settlement strong {
+    font-size: 12px;
+    max-width: 115px;
+  }
+  .compact-ui .settlement .eyebrow {
+    font-size: 8px;
+    flex: none;
+    letter-spacing: 0;
+  }
+  .compact-ui .time-controls {
+    grid-area: 1 / 2;
+    gap: 0;
+  }
+  .compact-ui .time-controls button {
+    width: 32px;
+    height: 32px;
+    min-height: 32px;
+  }
+  .compact-ui #day-count {
+    display: none;
+  }
+  .compact-ui .resources {
+    grid-area: 2 / 1 / 3 / 3;
+    justify-content: flex-start;
+    margin-right: 67px;
+    width: calc(100% - 67px);
+    padding: 0;
+    border: 0;
+    height: 28px;
+    gap: 0;
+  }
+  .compact-ui .resource {
+    height: 28px;
+    flex: 1;
+    padding: 0 4px;
+    gap: 4px;
+  }
+  .compact-ui .resource .icon {
+    width: 16px;
+    height: 16px;
+  }
+  .compact-ui .resource strong {
+    font-size: 11px;
+  }
+  .compact-ui .population {
+    grid-area: 2 / 2;
+    justify-self: end;
+    min-width: 62px;
+    padding: 0 2px;
+  }
+  .compact-ui #dock {
+    right: 6px;
+    top: calc(var(--bar-height) + 18px);
+  }
+  .compact-ui #journey,
+  .compact-ui #build-panel,
+  .compact-ui #inspector,
+  .compact-ui .modal {
+    top: calc(var(--bar-height) + 18px);
+  }
+  .compact-ui #map-panel {
+    left: 6px;
+    bottom: 6px;
+    width: 110px;
+    padding: 5px;
+  }
+  .compact-ui #minimap {
+    width: 98px;
+    height: 78px;
+  }
+  .compact-ui .map-tools .icon-button {
+    height: 32px;
+    width: 31px;
+  }
+  .compact-ui .map-head {
+    display: none;
+  }
+  .compact-ui .modal-header h2 {
+    font-size: 19px;
+  }
+  .compact-ui .research-symbol {
+    display: none;
+  }
+  .compact-ui #placement {
+    top: calc(var(--bar-height) + 18px);
+    left: 6px;
+  }
+  .compact-ui #toast {
+    bottom: 10px;
+    left: 124px;
+    right: 6px;
+    max-width: none;
+    transform: translateY(10px);
+    padding: 8px;
+  }
+  .compact-ui #toast.visible {
+    transform: translateY(0);
+  }
+}
+@media (max-height: 480px) {
+  .compact-ui .dock-tabs {
+    gap: 1px;
+  }
+  .compact-ui .dock-tabs button {
+    height: 40px;
+    min-height: 40px;
+  }
+  .compact-ui #dock {
+    max-height: calc(100svh - var(--bar-height) - 26px);
+    overflow-y: auto;
+  }
+  .compact-ui #map-panel {
+    width: 94px;
+  }
+  .compact-ui #minimap {
+    width: 82px;
+    height: 55px;
+  }
+}

@@ -1,4 +1,14 @@
-# Pocket Civilization 0.2 – Spielhilfe
+# Pocket Civilization 0.4 – Spielhilfe
+
+## Mehr Platz für die Spielwelt
+
+Rechts stehen sechs Symbole: Haus = Bauen, Buch = Forschung, Karte = Weltkarte, Schwerter = Militär, Liste = Aufgaben und Fahne = Dein Weg. Die Fenster sind anfangs geschlossen. Ein Tipp öffnet das gewünschte Fenster; derselbe Knopf, **×** oder **Esc** schließt es wieder. Ein anderes Symbol wechselt direkt zum anderen Fenster. Die Welt lässt sich daneben weiterhin verschieben und Gebäude lassen sich auswählen. Die Android-Zurücktaste schließt zunächst das offene Fenster oder die Gebäudeauswahl.
+
+Die Minikarte liegt unten links. Darunter befinden sich Verkleinern, Dorf zentrieren und Vergrößern. Die Kopfleiste ist schmal; Rohstoffe und Einwohner öffnen bei Bedarf die Wirtschaftsübersicht. Einstellungen erreicht man über das Zahnrad oben rechts.
+
+**Forschungshütte finden:** Im Forschungsfenster **Forschungshütte bauen** wählen oder im Baumenü unter **Gemeinschaft** suchen. Die Bausuche durchsucht alle Gebäudearten. Steht die Hütte bereits, führt **Im Dorf zeigen** zu ihr und öffnet ihre Arbeiterverwaltung. Ohne zugewiesene Arbeiter erzeugt sie kein Wissen.
+
+Zukünftige Gebäude bleiben im Baumenü zunächst ausgeblendet. Mit **Spätere Epochen** werden sie samt Freischaltvoraussetzungen angezeigt. In der Steinzeit erscheinen einfache Unterstände, Lehm-/Flechthütten, Strohdächer und unbefestigte Wege. Der Epochenwechsel aktualisiert ihre Darstellung; auch bestehende Spielstände werden entsprechend angezeigt.
 
 ## Aufbau und Versorgung
 
@@ -47,9 +57,8 @@ Automatisch wird alle 30 Sekunden gespeichert. **Einstellungen → Spielstände*
 
 Optional lässt sich Fortschritt während der Abwesenheit aktivieren. Bei Rückkehr werden höchstens zwei Stunden mit der echten Simulation nachgeholt; Dorfüberfälle warten. Standardmäßig ist diese Option ausgeschaltet. Ein voller Speicher oder verweigerter Browserzugriff wird angezeigt – dann den Stand exportieren.
 
-
 ## Grafik und Kompatibilität
 
-Die farbigere Darstellung in Version 0.3.0 übernimmt bestehende Spielstände. Einheiten zeigen ihre Ausrüstung, Arbeiter transportieren sichtbare Kisten und verwenden Werkzeuge. Unter **Einstellungen** kann die sparsame Grafik gewählt werden.
+Die Darstellung in Version 0.4.0 übernimmt bestehende Spielstände und berücksichtigt deren Epoche. Einheiten zeigen ihre Ausrüstung, Arbeiter transportieren sichtbare Kisten und verwenden Werkzeuge. Unter **Einstellungen** kann die sparsame Grafik gewählt werden.
 
 Bei einem Browser ohne WebGL verwendet das Spiel Canvas. Zum gezielten Start in diesem Modus `?renderer=canvas` an die Spieladresse anhängen, zum Beispiel `http://localhost:4173/?renderer=canvas`. In der Android-Testfassung erscheint nach einem Abbruch der Grafikansicht ein eigener Knopf für den Kompatibilitätsmodus. Gespeicherte Spielstände werden dadurch nicht gelöscht.

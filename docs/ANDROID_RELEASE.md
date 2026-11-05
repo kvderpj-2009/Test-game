@@ -1,6 +1,8 @@
-# Android-Testfassung 0.3.0
+# Android-Testfassung 0.4.0
 
 Das native Projekt liegt in `android/`. Eine kleine Java-Activity lädt den vollständigen Produktionsbuild aus dem APK über einen lokalen HTTPS-Ursprung. Sie verwendet die Android-System-WebView. Es gibt keine Netzwerkberechtigung, externe Serveradresse, Werbung oder verpflichtenden Konten. Die Anwendung benötigt Android 8 oder neuer sowie eine aktuelle System-WebView; die bislang geprüften Android-Versionen stehen im Entwicklungsbericht.
+
+Version 0.4.0 enthält die kompakte Oberfläche und Steinzeitgrafik. Die native Java-Hülle bleibt gegenüber 0.3.0 unverändert; die JavaScript-Zurückbehandlung schließt auch Baumenü, Dein Weg und Gebäudeauswahl. Die folgende native Emulatordokumentation bezieht sich auf 0.3.0 und ist keine Gerätefreigabe für 0.4.0.
 
 ## Bisheriger nativer Befund
 
@@ -8,7 +10,7 @@ Die Browserfassung besteht ihre Prüfungen mit WebGL und Canvas. Für die native
 
 Im bisherigen Android-35-Testsystem stürzte WebView 124 mit `SIGTRAP` ab. Zur Eingrenzung wurde eine eigenständige, minimale Test-App auf Android 34 mit WebView 113.0.5672.136 installiert. Auch deren einfache lokale HTML-Seite löste einen Rendererabbruch aus, ohne Spielskripte, Pixi oder WebGL. Die Cloud-Emulatoren laufen ohne KVM; außerdem traten Android-System-ANRs auf. Dieser Befund belegt einen Fehler außerhalb des eigentlichen Spielcodes, bestimmt aber seine genaue Ursache noch nicht.
 
-Die neue 0.3.0-APK ließ sich anschließend installieren. Bei ihrem fehlgeschlagenen Start erschien tatsächlich die native Wiederherstellungsansicht, und die Activity blieb aktiv. Nach Schließen eines Android-System-UI-ANR-Dialogs wurde der Kompatibilitätsknopf betätigt; die App speicherte `canvasRenderer=true`. Damit sind die Wiederherstellungsansicht und die Auswahl des Modus nativ nachgewiesen, jedoch noch kein erfolgreicher nativer Spielbetrieb. [Aufnahme der Wiederherstellungsansicht](android-recovery-0.3.0.png), [Prüfprotokoll](ANDROID_VERIFICATION.json).
+Die damals neue 0.3.0-APK ließ sich anschließend installieren. Bei ihrem fehlgeschlagenen Start erschien tatsächlich die native Wiederherstellungsansicht, und die Activity blieb aktiv. Nach Schließen eines Android-System-UI-ANR-Dialogs wurde der Kompatibilitätsknopf betätigt; die App speicherte `canvasRenderer=true`. Damit sind die Wiederherstellungsansicht und die Auswahl des Modus nativ nachgewiesen, jedoch noch kein erfolgreicher nativer Spielbetrieb. [Aufnahme der Wiederherstellungsansicht](android-recovery-0.3.0.png), [Prüfprotokoll](ANDROID_VERIFICATION.json).
 
 Die APK ist deshalb weiterhin experimentell. Der vollständige, separat geprüfte Browserbuild und sein Starter liegen im selben Downloadpaket.
 
@@ -33,12 +35,12 @@ ANDROID_SDK_ROOT=/pfad/zum/android-sdk npm run build:android
 
 Das Skript verwendet `aapt2`, den Java-Compiler, `d8`, `zipalign` und `apksigner`. Zusätzliche Frameworks oder Gradle-Abhängigkeiten sind nicht erforderlich. Ergebnis:
 
-`android/build/Pocket-Civilization-0.3.0-debug.apk`
+`android/build/Pocket-Civilization-0.4.0-debug.apk`
 
 Die Signatur wird nach dem Build verifiziert. Der lokale Debug-Schlüssel liegt außerhalb des Repositorys, standardmäßig in `/workspace/.pocket-signing/`; mit `POCKET_SIGNING_DIR` lässt sich der Ordner ändern. Er nutzt die üblichen Android-Debug-Zugangsdaten und ist ausschließlich für Testfassungen bestimmt. Für Updates derselben Testinstallation muss derselbe Schlüssel erhalten bleiben. Kein privater Schlüssel wird im Downloadpaket oder im Repository mitgeliefert.
 
 ```bash
-adb install -r android/build/Pocket-Civilization-0.3.0-debug.apk
+adb install -r android/build/Pocket-Civilization-0.4.0-debug.apk
 adb shell am start -n app.pocketcivilization.game/.MainActivity
 ```
 
