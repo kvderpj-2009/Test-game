@@ -1,8 +1,8 @@
-# Android-Testfassung 0.4.0
+# Android-Testfassung 0.4.1
 
 Das native Projekt liegt in `android/`. Eine kleine Java-Activity lädt den vollständigen Produktionsbuild aus dem APK über einen lokalen HTTPS-Ursprung. Sie verwendet die Android-System-WebView. Es gibt keine Netzwerkberechtigung, externe Serveradresse, Werbung oder verpflichtenden Konten. Die Anwendung benötigt Android 8 oder neuer sowie eine aktuelle System-WebView; die bislang geprüften Android-Versionen stehen im Entwicklungsbericht.
 
-Version 0.4.0 enthält die kompakte Oberfläche und Steinzeitgrafik. Die native Java-Hülle bleibt gegenüber 0.3.0 unverändert; die JavaScript-Zurückbehandlung schließt auch Baumenü, Dein Weg und Gebäudeauswahl. Die folgende native Emulatordokumentation bezieht sich auf 0.3.0 und ist keine Gerätefreigabe für 0.4.0.
+Version 0.4.1 unterdrückt die Bau-Popups und korrigiert den Baufortschrittsbalken. Seit Version 0.4.0 enthält das Spiel die kompakte Oberfläche und Steinzeitgrafik. Die native Java-Hülle bleibt gegenüber 0.3.0 unverändert; die JavaScript-Zurückbehandlung schließt auch Baumenü, Dein Weg und Gebäudeauswahl. Die folgende native Emulatordokumentation bezieht sich auf 0.3.0 und ist keine Gerätefreigabe für 0.4.1.
 
 ## Bisheriger nativer Befund
 
@@ -35,12 +35,12 @@ ANDROID_SDK_ROOT=/pfad/zum/android-sdk npm run build:android
 
 Das Skript verwendet `aapt2`, den Java-Compiler, `d8`, `zipalign` und `apksigner`. Zusätzliche Frameworks oder Gradle-Abhängigkeiten sind nicht erforderlich. Ergebnis:
 
-`android/build/Pocket-Civilization-0.4.0-debug.apk`
+`android/build/Pocket-Civilization-0.4.1-debug.apk`
 
 Die Signatur wird nach dem Build verifiziert. Der lokale Debug-Schlüssel liegt außerhalb des Repositorys, standardmäßig in `/workspace/.pocket-signing/`; mit `POCKET_SIGNING_DIR` lässt sich der Ordner ändern. Er nutzt die üblichen Android-Debug-Zugangsdaten und ist ausschließlich für Testfassungen bestimmt. Für Updates derselben Testinstallation muss derselbe Schlüssel erhalten bleiben. Kein privater Schlüssel wird im Downloadpaket oder im Repository mitgeliefert.
 
 ```bash
-adb install -r android/build/Pocket-Civilization-0.4.0-debug.apk
+adb install -r android/build/Pocket-Civilization-0.4.1-debug.apk
 adb shell am start -n app.pocketcivilization.game/.MainActivity
 ```
 

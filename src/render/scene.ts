@@ -614,14 +614,10 @@ export class Scene {
         p = iso(b.x + d.size / 2, b.y + d.size / 2);
       if (!this.inView(p.x, p.y)) continue;
       if (b.remaining) {
+        const duration = b.level > 1 ? 12 : d.time;
+        const progress = Math.max(0, Math.min(1, 1 - b.remaining / duration));
         e.roundRect(p.x - 20, p.y - 75, 40, 4, 2).fill({ color: 0x314e3e, alpha: 0.4 });
-        e.roundRect(
-          p.x - 20,
-          p.y - 75,
-          Math.max(1, 40 * (1 - b.remaining / Math.max(d.time, 12))),
-          4,
-          2,
-        ).fill(0xe6d69d);
+        if (progress > 0) e.roundRect(p.x - 20, p.y - 75, 40 * progress, 4, 2).fill(0xe6d69d);
       }
       if (
         (b.type === 'hall' || b.type === 'smelter' || b.type === 'fire') &&

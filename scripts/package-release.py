@@ -71,6 +71,7 @@ Sein Import ersetzt nach Bestätigung den aktiven Stand; dieser wird zuvor manue
 
 INHALT
 Alle elf Epochen, mehrere Siedlungen, Warenrouten, Versorgung, Truppen und Kampagnensieg.
+Bauen ohne Popups bei Baubeginn oder Fertigstellung; Fortschritt direkt am Gebäude.
 Schmale Kopfleiste, Symbole rechts, schließbare Fenster und Minikarte unten links.
 Forschungshütte direkt im Forschungsfenster bauen oder finden. Eigene Steinzeitgebäude.
 SPIELHILFE.md erklärt den Fortschritt; GRAFIK.md den Kompatibilitätsmodus.

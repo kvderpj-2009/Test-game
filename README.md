@@ -1,4 +1,4 @@
-# Pocket Civilization 0.4.0
+# Pocket Civilization 0.4.1
 
 Ein eigenständiges, lokal spielbares Aufbaustrategiespiel für den Browser. Der Schwerpunkt liegt auf Siedlungswirtschaft, freien Bauplätzen, Arbeitern, Erkundung und einfachen Echtzeitkämpfen. Anregungen von Anno und Age of Empires werden mit eigenen Namen und eigener Grafik umgesetzt.
 
@@ -37,6 +37,8 @@ Browserprüfungen verwenden hier `/usr/bin/chromium`. Auf anderen Systemen `PLAY
 Lager sind begrenzt. Ein Betrieb ohne Arbeiter liefert keine Produktionswaren. Bei Ressourcenmangel können Arbeiter anderen Betrieben zugewiesen und Hindernisse für etwas Holz oder Stein entfernt werden. Werkstätten verbrauchen Holz: Zu viel Handwerk kann die Holzversorgung ausbremsen.
 
 ## Bedienung
+
+Bauaufträge und fertige Gebäude erzeugen keine eingeblendeten Meldungen mehr. Der Baufortschritt bleibt am Gebäude und bei Auswahl in dessen Fenster sichtbar. Das gilt auch für Ausbauten und weitere Siedlungen.
 
 Die Menüs beginnen geschlossen. Rechts öffnen die Symbole **Bauen**, **Forschung**, **Weltkarte**, **Militär**, **Aufgaben** und **Dein Weg** jeweils ein kleines Fenster. Nochmals auf dasselbe Symbol, auf **×** oder **Esc** drücken schließt es. Die Welt neben dem Fenster bleibt bedienbar. Die schmale Kopfleiste zeigt Vorräte und Bevölkerung; die Minikarte mit Zoomknöpfen liegt unten links, auch auf dem Handy.
 

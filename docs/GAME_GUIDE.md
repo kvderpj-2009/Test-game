@@ -1,4 +1,4 @@
-# Pocket Civilization 0.4 – Spielhilfe
+# Pocket Civilization 0.4.1 – Spielhilfe
 
 ## Mehr Platz für die Spielwelt
 
@@ -11,6 +11,8 @@ Die Minikarte liegt unten links. Darunter befinden sich Verkleinern, Dorf zentri
 Zukünftige Gebäude bleiben im Baumenü zunächst ausgeblendet. Mit **Spätere Epochen** werden sie samt Freischaltvoraussetzungen angezeigt. In der Steinzeit erscheinen einfache Unterstände, Lehm-/Flechthütten, Strohdächer und unbefestigte Wege. Der Epochenwechsel aktualisiert ihre Darstellung; auch bestehende Spielstände werden entsprechend angezeigt.
 
 ## Aufbau und Versorgung
+
+Baubeginn und Fertigstellung werden ohne Popup angezeigt, auch bei Ausbauten und in anderen Siedlungen. Solange gebaut wird, ist das Gebäude blasser und trägt einen kleinen Fortschrittsbalken. Bei Fertigstellung erscheint es vollständig und der Balken verschwindet. Durch Anklicken lassen sich Bauzeit und Arbeiterverwaltung aufrufen.
 
 Beginne mit Hütten, Holzfällerlager, Steinbruch und Forschungshütte. Weise Betrieben über das Gebäudemenü Arbeiter zu. Freie Bewohner sammeln Grundressourcen; Bauaufträge haben Vorrang. Halte deshalb Nahrungsvorräte bereit, bevor du viele Baustellen gleichzeitig eröffnest.
 

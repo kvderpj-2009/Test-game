@@ -1,6 +1,6 @@
-# Entwicklungsstand — Pocket Civilization 0.4.0
+# Entwicklungsstand — Pocket Civilization 0.4.1
 
-Stand: 5. November 2026. Die Spielsysteme sind bis zum Kampagnensieg umgesetzt; die anschließende Grafikverfeinerung ist enthalten. Die Browserfassung ist automatisiert geprüft. Android bleibt eine experimentelle Debug-Testfassung, ohne Geräte- oder Store-Freigabe.
+Stand: 6. November 2026. Die Spielsysteme sind bis zum Kampagnensieg umgesetzt; die anschließende Grafikverfeinerung ist enthalten. Die Browserfassung ist automatisiert geprüft. Android bleibt eine experimentelle Debug-Testfassung, ohne Geräte- oder Store-Freigabe.
 
 ## Sicherungen
 
@@ -11,6 +11,16 @@ Vor dem grafischen Ausbau wurde `/workspace/backups/Pocket-Civilization-before-p
 Alle elf Epochen von der Steinzeit bis zur Raumfahrt sind spielbar: 65 Gebäudetypen, 23 Ressourcen, 16 Forschungen, 13 Truppentypen, 22 Aufgaben und zwölf Regionen. Produktion benötigt tatsächlich Arbeiter und Eingangswaren. Bis zu vier Siedlungen besitzen getrennte Lager, Bevölkerung und Armeen; bis zu zwölf Warenrouten transportieren echte Fracht. Gesundheit, Bildung, Kultur, Reparaturen, Erkundung, Überfälle, drei Schwierigkeitsgrade, Formationen und Abwesenheitsfortschritt sind implementiert. Die Raumexpedition beendet die Kampagne; Weiterspielen ist möglich.
 
 Format 3 übernimmt bestehende Spielstände; der ursprüngliche Version-0.1-Stand bleibt bei der Migration zusätzlich gesichert. Automatisches und manuelles Speichern sowie JSON-Export/-Import sind vorhanden. Oberfläche und Spieltexte gibt es in Deutsch, Englisch, Spanisch und Französisch. [Spielhilfe](docs/GAME_GUIDE.md).
+
+## Neu in 0.4.1
+
+- Keine eingeblendeten Meldungen und zusätzlichen Meldungstöne bei Bauauftrag oder Fertigstellung, einschließlich Ausbauten und Hintergrundsiedlungen. Die Ereignisse der Simulation bleiben erhalten; die Oberfläche unterdrückt diese beiden Routinemeldungen.
+- Der kleine Fortschrittsbalken am Gebäude berücksichtigt jetzt die tatsächliche Bauzeit beziehungsweise zwölf Sekunden für einen Ausbau. Kurze Bauten beginnen dadurch leer; Ausbauten längerer Gebäudetypen zeigen den korrekten Fortschritt.
+- Bestehende Baustellen, Speicherformat und Bedienung werden übernommen. Sicherung vor der Änderung: `/workspace/backups/Pocket-Civilization-before-quiet-building.bundle`, geprüft.
+
+### Prüfungen für 0.4.1
+
+34 Simulationstests, vier gezielte Browserprüfungen (Desktop-/Touch-Bauen und beide Grafikmodi) sowie die Produktions-/Offlineprüfung bestanden. In einem zusätzlichen echten Bauablauf wurden fünf Bauereignisse bei Neubau, Ausbau und einer Hintergrundsiedlung erfasst: kein Bau-Popup, alle Baustellen fertig. Eine fehlgeschlagene Bestellung zeigt ihren Ressourcenfehler weiterhin an. TypeScript, Produktionsbuild, Offline-Assetliste und signierte APK erstellt; eingebettete Spieldateien und Update-Zertifikat sind abgeglichen. Der Paketstarter wurde mit Spielstart, Speichern und Offline-Canvas erfolgreich geprüft. Das endgültige Paket wird gegen genau diese Spieldateien abgeglichen. Der native Gerätebefund bleibt unverändert.
 
 ## Neu in 0.4.0
 
@@ -31,7 +41,7 @@ Format 3 übernimmt bestehende Spielstände; der ursprüngliche Version-0.1-Stan
 - Native Android-Wiederherstellung nach Rendererabbruch oder ausbleibender Startbestätigung nach 45 Sekunden. Der Kompatibilitätsknopf merkt sich Canvas für folgende Starts. Alte WebView-Rückmeldungen dürfen einen neuen Start nicht ersetzen. Bestehende lokale Spielstände werden nicht gelöscht.
 - Reproduzierbares Downloadpaket mit Starter, APK, Quellcode, Spielhilfe, Bibliothekslizenzen und geprüften SHA-256-Dateiprüfsummen: `scripts/package-release.py`.
 
-## Nachgewiesene Prüfungen
+## Breiter Prüfstand aus 0.4.0
 
 - **34 Simulationstests bestanden.** Platzierung, Kosten, Produktion, Bevölkerungswachstum, Forschung, Kampf, Migration, beschädigte Daten, Siedlungen, Routen, volle Lager, Frachtrückgabe, Befehle, Brücken und Abwesenheitsfortschritt.
 - Der vollständige Kampagnentest verwendet reguläre Startvorräte, normale Bau-/Forschungsaktionen und echte Produktion: alle elf Epochen, Raumexpedition, 107 Einwohner, 68 Gebäude und zwei Siedlungen nach etwa 3.450 simulierten Sekunden. Friedlicher Modus; Kampflogik wird zusätzlich separat und im Bronze-Durchlauf geprüft.

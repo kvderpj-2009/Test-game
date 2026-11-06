@@ -173,6 +173,8 @@ export class GameUI {
       if (map) this.scene.minimap(map);
     };
     this.engine.onEvent = (key, params) => {
+      // Construction is visible on the map; routine build events should not interrupt play.
+      if (key === 'buildingStarted' || key === 'buildingReady') return;
       this.toast((params?.city ? cityName(this.engine, String(params.city)) + ': ' : '') + t(key));
       this.chime();
     };
